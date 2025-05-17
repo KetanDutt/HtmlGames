@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Rendering</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: sans-serif;
+        }
+        
+        canvas {
+            border: 1px solid #ccc;
+        }
+        
+        #fpsDisplay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #333;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="myCanvas" width="800" height="600"></canvas>
+    <div id="fpsDisplay">FPS: 0</div>
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+        const fpsDisplay = document.getElementById('fpsDisplay');
+
+        const vertices = [
+            [-1, -1, -1],
+            [1, -1, -1],
+            [1, 1, -1],
+            [-1, 1, -1],
+            [-1, -1, 1],
+            [1, -1, 1],
+            [1, 1, 1],
+            [-1, 1, 1]
+        ];
+
+        const faces = [
+            [0, 1, 2, 3],
+            [1, 5, 6, 2],
+            [5, 4, 7, 6],
+            [4, 0, 3, 7],
+            [3, 2, 6, 7],
+            [0, 1, 5, 4]
+        ];
+
+        let focalLength = 300;
+        let rotationY = 0;
+        let cameraX = 0,
+            cameraY = 0,
+            cameraZ = -5;
+        let cameraLookAngle = 0;
+
+        let lastTime = performance.now();
+        let fps = 0,
+            frameCount = 0;
+        let deltaTime = 0;
+
+        function rotateY(x, y, z, angle) {
+            const rad = angle * Math.PI / 180;
+            return [
+                x * Math.cos(rad) + z * Math.sin(rad),
+                y, -x * Math.sin(rad) + z * Math.cos(rad)
+            ];
+        }
+
+        function project(x, y, z) {
+            const worldX = x - cameraX;
+            const worldY = y - cameraY;
+            const worldZ = z - cameraZ;
+
+            if (worldZ <= 0) return null;
+
+            return {
+                x: (focalLength * worldX) / worldZ + canvas.width / 2,
+                y: (focalLength * worldY) / worldZ + canvas.height / 2
+            };
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#333';
+
+            for (const face of faces) {
+                const projectedPoints = face.map(i => {
+                    let [x, y, z] = vertices[i];
+                    [x, y, z] = rotateY(x, y, z, rotationY);
+                    const rotatedY = y * Math.cos(cameraLookAngle * Math.PI / 180) - z * Math.sin(cameraLookAngle * Math.PI / 180);
+                    const rotatedZ = y * Math.sin(cameraLookAngle * Math.PI / 180) + z * Math.cos(cameraLookAngle * Math.PI / 180);
+                    return project(x, rotatedY, rotatedZ);
+                }).filter(p => p !== null);
+
+                if (projectedPoints.length < 3) continue;
+
+                ctx.moveTo(projectedPoints[0].x, projectedPoints[0].y);
+                for (let i = 1; i < projectedPoints.length; i++) {
+                    ctx.lineTo(projectedPoints[i].x, projectedPoints[i].y);
+                }
+                ctx.closePath();
+            }
+
+            ctx.stroke();
+        }
+
+        function updateFPS(currentTime) {
+            frameCount++;
+            if (currentTime - lastTime >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                lastTime = currentTime;
+                fpsDisplay.textContent = `FPS: ${fps}`;
+            }
+        }
+
+        const keys = {};
+        document.addEventListener('keydown', event => keys[event.key] = true);
+        document.addEventListener('keyup', event => keys[event.key] = false);
+
+        function handleCameraMovement() {
+            const speed = 0.0001 * deltaTime;
+            const lookSpeed = 0.001 * deltaTime;
+
+            if (keys['w']) cameraZ += speed;
+            if (keys['s']) cameraZ -= speed;
+            if (keys['a']) cameraX -= speed;
+            if (keys['d']) cameraX += speed;
+            if (keys['q']) cameraLookAngle -= lookSpeed;
+            if (keys['e']) cameraLookAngle += lookSpeed;
+
+            cameraLookAngle = Math.max(-90, Math.min(90, cameraLookAngle));
+        }
+
+        function animate(currentTime) {
+            deltaTime = currentTime - lastTime;
+            updateFPS(currentTime);
+            // rotationY += 0.1 * deltaTime;
+
+            handleCameraMovement();
+            draw();
+
+            requestAnimationFrame(animate);
+        }
+
+        animate(lastTime);
+    </script>
+</body>
+
+</html>

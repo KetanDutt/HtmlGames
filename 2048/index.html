@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 Game</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Confetti JS -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #faf8ef;
+            --text-color: #776e65;
+            --tile-bg: #eee4da;
+            --grid-bg: #bbada0;
+            --tile-text-dark: #776e65;
+            --tile-text-light: #f9f6f2;
+            --button-bg: #8f7a66;
+            --button-text: #f9f6f2;
+            --grid-size: 4;
+        }
+
+        .dark-mode {
+            --bg-color: #121212;
+            --text-color: #dddddd;
+            --tile-bg: #2d2d2d;
+            --grid-bg: #1a1a1a;
+            --tile-text-dark: #776e65;
+            --tile-text-light: #f9f6f2;
+            --button-bg: #333333;
+            --button-text: #ffffff;
+        }
+
+        /* Light mode tile colors */
+        .tile-2 { background-color: #eee4da; color: var(--tile-text-dark); }
+        .tile-4 { background-color: #ede0c8; color: var(--tile-text-dark); }
+        .tile-8 { background-color: #f2b179; color: var(--tile-text-light); }
+        .tile-16 { background-color: #f59563; color: var(--tile-text-light); }
+        .tile-32 { background-color: #f67c5f; color: var(--tile-text-light); }
+        .tile-64 { background-color: #f65e3b; color: var(--tile-text-light); }
+        .tile-128 { background-color: #edcf72; color: var(--tile-text-light); }
+        .tile-256 { background-color: #edcc61; color: var(--tile-text-light); }
+        .tile-512 { background-color: #edc850; color: var(--tile-text-light); }
+        .tile-1024 { background-color: #edc53f; color: var(--tile-text-light); }
+        .tile-2048 { background-color: #edc22e; color: var(--tile-text-light); }
+        .tile-super { background-color: #3c3a32; color: var(--tile-text-light); }
+
+        /* Dark mode tile colors */
+        .dark-mode .tile-2 { background-color: #3e3a32; color: var(--tile-text-light); }
+        .dark-mode .tile-4 { background-color: #4e4438; color: var(--tile-text-light); }
+        .dark-mode .tile-8 { background-color: #805f45; color: var(--tile-text-light); }
+        .dark-mode .tile-16 { background-color: #a65e3a; color: var(--tile-text-light); }
+        .dark-mode .tile-32 { background-color: #c74f3f; color: var(--tile-text-light); }
+        .dark-mode .tile-64 { background-color: #e14d2a; color: var(--tile-text-light); }
+        .dark-mode .tile-128 { background-color: #bfa93a; color: var(--tile-text-dark); }
+        .dark-mode .tile-256 { background-color: #bda636; color: var(--tile-text-dark); }
+        .dark-mode .tile-512 { background-color: #baa326; color: var(--tile-text-dark); }
+        .dark-mode .tile-1024 { background-color: #b89f1d; color: var(--tile-text-dark); }
+        .dark-mode .tile-2048 { background-color: #b69b10; color: var(--tile-text-dark); }
+        .dark-mode .tile-super { background-color: #f9f6f2; color: var(--tile-text-dark); }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            touch-action: none;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .title-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .scores-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .score-box {
+            background: var(--grid-bg);
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-align: center;
+            color: var(--tile-text-light);
+            min-width: 80px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .grid-container {
+            background-color: var(--grid-bg);
+            border-radius: 6px;
+            padding: 15px;
+            position: relative;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            aspect-ratio: 1/1;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-size), 1fr);
+            grid-gap: 15px;
+            position: relative;
+            height: 100%;
+            width: 100%;
+        }
+
+        .grid-cell {
+            background-color: rgba(238, 228, 218, 0.15);
+            border-radius: 3px;
+            aspect-ratio: 1/1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .tile {
+            position: absolute;
+            width: calc((100% - (15px * var(--grid-size))) / var(--grid-size));
+            height: calc((100% - (15px * var(--grid-size))) / var(--grid-size));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: calc(2.2rem - (var(--grid-size) - 4) * 0.3rem);
+            font-weight: bold;
+            border-radius: 3px;
+            background: var(--tile-bg);
+            color: var(--tile-text-dark);
+            transition: all 0.15s ease-in-out;
+            z-index: 10;
+            user-select: none;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .tile-move {
+            transition: transform 0.15s ease-in-out;
+        }
+
+        .tile-merged {
+            animation: merge 0.2s ease-in-out;
+            z-index: 20;
+        }
+
+        .tile-new {
+            animation: appear 0.2s ease-in-out;
+        }
+
+        .tile-trail {
+            position: absolute;
+            background-color: rgba(238, 228, 218, 0.3);
+            border-radius: 3px;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes appear {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes merge {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Game controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn-game {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            font-weight: bold;
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-game:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-game:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Swipe indicators */
+        .swipe-indicators {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 30;
+        }
+
+        .swipe-arrow {
+            position: absolute;
+            font-size: 2rem;
+            color: rgba(255, 255, 255, 0.3);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
+            100% { opacity: 0.3; transform: scale(1); }
+        }
+
+        /* Achievements */
+        .achievement-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(200%);
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            max-width: 300px;
+        }
+
+        .achievement-toast.show {
+            transform: translateX(0);
+        }
+
+        .achievement-icon {
+            font-size: 1.8rem;
+            color: gold;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+
+        .achievement-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 3px;
+        }
+
+        .achievement-desc {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Game message */
+        .game-message {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(238, 228, 218, 0.73);
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .game-message.game-won { 
+            background-color: rgba(237, 194, 46, 0.5);
+        }
+
+        .game-message.game-over {
+            background-color: rgba(238, 228, 218, 0.9);
+        }
+
+        .game-message p {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #776e65;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Grid size selector */
+        .grid-size-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .grid-size-btn {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 8px;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .grid-size-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .grid-size-btn.active {
+            background-color: #edc22e;
+            color: white;
+            box-shadow: 0 0 10px rgba(237, 194, 46, 0.5);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 520px) {
+            .title {
+                font-size: 2rem;
+            }
+            
+            .swipe-indicators {
+                display: block;
+            }
+
+            .btn-game {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            .grid-size-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container game-container">
+        <div class="header">
+            <div class="title-container">
+                <div class="title">2048</div>
+            </div>
+            <div class="scores-container">
+                <div class="score-box">
+                    <div class="score-title">Score</div>
+                    <div class="score-value" id="score">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-title">Best</div>
+                    <div class="score-value" id="best-score">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-size-selector">
+            <button class="grid-size-btn" data-size="3">3×3</button>
+            <button class="grid-size-btn active" data-size="4">4×4</button>
+            <button class="grid-size-btn" data-size="5">5×5</button>
+            <button class="grid-size-btn" data-size="6">6×6</button>
+        </div>
+
+        <div class="controls">
+            <button class="btn-game" id="undo-btn" title="Undo (Z)">
+                <i class="fas fa-undo"></i> Undo
+            </button>
+            <button class="btn-game" id="new-game-btn" title="New Game (N)">
+                <i class="fas fa-redo"></i> New Game
+            </button>
+            <button class="btn-game" id="theme-toggle" title="Toggle Theme (T)">
+                <i class="fas fa-moon" id="theme-icon"></i> Theme
+            </button>
+        </div>
+
+        <div class="grid-container">
+            <div class="swipe-indicators">
+                <div class="swipe-arrow" style="top: 50%; left: 10px; transform: translateY(-50%);">←</div>
+                <div class="swipe-arrow" style="top: 50%; right: 10px; transform: translateY(-50%);">→</div>
+                <div class="swipe-arrow" style="top: 10px; left: 50%; transform: translateX(-50%);">↑</div>
+                <div class="swipe-arrow" style="bottom: 10px; left: 50%; transform: translateX(-50%);">↓</div>
+            </div>
+            <div class="grid" id="grid"></div>
+            <div class="game-message" id="game-message">
+                <p id="message-text">You Win!</p>
+                <div class="d-flex flex-wrap justify-content-center gap-2">
+                    <button class="btn-game" id="keep-playing-btn">
+                        <i class="fas fa-arrow-right"></i> Keep going
+                    </button>
+                    <button class="btn-game" id="try-again-btn">
+                        <i class="fas fa-redo"></i> Try again
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="achievement-toast" id="achievement-toast">
+            <i class="fas fa-trophy achievement-icon"></i>
+            <div>
+                <div class="achievement-title" id="achievement-title">Achievement Unlocked!</div>
+                <div class="achievement-desc" id="achievement-desc"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game state
+            let grid = [];
+            let score = 0;
+            let bestScore = 0;
+            let gameOver = false;
+            let won = false;
+            let keepPlaying = false;
+            let gridSize = 4;
+            let achievements = {
+                reached256: false,
+                reached512: false,
+                reached1024: false,
+                reached2048: false,
+                merged50: false,
+                merged100: false
+            };
+            let mergeCount = 0;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            let gridHistory = [];
+            let moveHistory = [];
+            let lastMoveTime = 0;
+
+            // DOM elements
+            const gridElement = document.getElementById('grid');
+            const scoreElement = document.getElementById('score');
+            const bestScoreElement = document.getElementById('best-score');
+            const gameMessageElement = document.getElementById('game-message');
+            const messageTextElement = document.getElementById('message-text');
+            const newGameBtn = document.getElementById('new-game-btn');
+            const keepPlayingBtn = document.getElementById('keep-playing-btn');
+            const tryAgainBtn = document.getElementById('try-again-btn');
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const undoBtn = document.getElementById('undo-btn');
+            const achievementToast = document.getElementById('achievement-toast');
+            const achievementTitle = document.getElementById('achievement-title');
+            const achievementDesc = document.getElementById('achievement-desc');
+            const gridSizeButtons = document.querySelectorAll('.grid-size-btn');
+
+            // Initialize the game
+            loadGame();
+            initGrid();
+
+            // Event listeners
+            document.addEventListener('keydown', handleKeyPress);
+            newGameBtn.addEventListener('click', initGame);
+            keepPlayingBtn.addEventListener('click', continueGame);
+            tryAgainBtn.addEventListener('click', initGame);
+            themeToggle.addEventListener('click', toggleTheme);
+            undoBtn.addEventListener('click', undoMove);
+            gridSizeButtons.forEach(btn => {
+                btn.addEventListener('click', () => changeGridSize(parseInt(btn.dataset.size)));
+            });
+
+            // Touch events for mobile
+            gridElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+            gridElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+            gridElement.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+            function initGame() {
+                // Reset game state
+                grid = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+                score = 0;
+                gameOver = false;
+                won = false;
+                keepPlaying = false;
+                mergeCount = 0;
+                gridHistory = [];
+                moveHistory = [];
+
+                // Reset achievements for this session
+                achievements = {
+                    reached256: false,
+                    reached512: false,
+                    reached1024: false,
+                    reached2048: false,
+                    merged50: false,
+                    merged100: false
+                };
+
+                // Update UI
+                scoreElement.textContent = '0';
+                document.documentElement.style.setProperty('--grid-size', gridSize);
+                undoBtn.disabled = true;
+                
+                // Hide game message
+                if (gameMessageElement) {
+                    gameMessageElement.style.display = 'none';
+                    gameMessageElement.classList.remove('game-won', 'game-over');
+                }
+
+                // Create grid cells
+                gridElement.innerHTML = '';
+                for (let i = 0; i < gridSize * gridSize; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    gridElement.appendChild(cell);
+                }
+
+                // Add initial tiles
+                addRandomTile();
+                addRandomTile();
+
+                // Save initial state
+                saveGameState();
+                renderGrid();
+            }
+
+            function initGrid() {
+                // Set initial grid size from saved preference or default to 4
+                const savedSize = localStorage.getItem('2048-grid-size');
+                gridSize = savedSize ? parseInt(savedSize) : 4;
+                document.documentElement.style.setProperty('--grid-size', gridSize);
+                
+                // Update active button
+                gridSizeButtons.forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.size) === gridSize);
+                });
+
+                initGame();
+            }
+
+            function changeGridSize(size) {
+                gridSize = size;
+                localStorage.setItem('2048-grid-size', size.toString());
+                gridSizeButtons.forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.size) === size);
+                });
+                initGame();
+            }
+
+            function continueGame() {
+                won = true;
+                keepPlaying = true;
+                if (gameMessageElement) {
+                    gameMessageElement.style.display = 'none';
+                    gameMessageElement.classList.remove('game-won');
+                }
+            }
+
+            function addRandomTile() {
+                const emptyCells = [];
+                
+                // Find all empty cells
+                for (let row = 0; row < gridSize; row++) {
+                    for (let col = 0; col < gridSize; col++) {
+                        if (grid[row][col] === 0) {
+                            emptyCells.push({ row, col });
+                        }
+                    }
+                }
+
+                // If there are empty cells, add a new tile (90% chance for 2, 10% for 4)
+                if (emptyCells.length > 0) {
+                    const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                    grid[row][col] = Math.random() < 0.9 ? 2 : 4;
+                    return { row, col, value: grid[row][col] };
+                }
+                return null;
+            }
+
+            function renderGrid() {
+                // Remove all existing tiles and trails
+                document.querySelectorAll('.tile, .tile-trail').forEach(el => el.remove());
+
+                // Add tiles to the grid
+                for (let row = 0; row < gridSize; row++) {
+                    for (let col = 0; col < gridSize; col++) {
+                        const value = grid[row][col];
+                        if (value !== 0) {
+                            const tile = document.createElement('div');
+                            tile.className = `tile tile-${value > 2048 ? 'super' : value}`;
+                            tile.textContent = value;
+                            tile.dataset.row = row;
+                            tile.dataset.col = col;
+                            
+                            // Position the tile
+                            positionTile(tile, row, col);
+                            
+                            gridElement.appendChild(tile);
+                        }
+                    }
+                }
+            }
+
+            function positionTile(tile, row, col) {
+                const gridContainer = document.querySelector('.grid-container');
+                const gridRect = gridContainer.getBoundingClientRect();
+                const cellSize = (gridRect.width - 15 * (gridSize + 1)) / gridSize;
+                
+                tile.style.left = `${col * (cellSize + 15)}px`;
+                tile.style.top = `${row * (cellSize + 15)}px`;
+                tile.style.width = `${cellSize}px`;
+                tile.style.height = `${cellSize}px`;
+            }
+
+            function animateTiles(moveData) {
+                // Create trails for moving tiles
+                moveData.movedTiles.forEach(tile => {
+                    const trail = document.createElement('div');
+                    trail.className = 'tile-trail';
+                    trail.dataset.row = tile.fromRow;
+                    trail.dataset.col = tile.fromCol;
+                    positionTile(trail, tile.fromRow, tile.fromCol);
+                    gridElement.appendChild(trail);
+                    
+                    // Fade in trail
+                    setTimeout(() => {
+                        trail.style.opacity = '0.5';
+                    }, 10);
+                    
+                    // Fade out trail after animation
+                    setTimeout(() => {
+                        trail.style.opacity = '0';
+                        setTimeout(() => trail.remove(), 300);
+                    }, 150);
+                });
+
+                // Animate tile movements
+                moveData.movedTiles.forEach(tile => {
+                    const tileElement = document.querySelector(`.tile[data-row="${tile.fromRow}"][data-col="${tile.fromCol}"]`);
+                    if (tileElement) {
+                        tileElement.classList.add('tile-move');
+                        tileElement.dataset.row = tile.toRow;
+                        tileElement.dataset.col = tile.toCol;
+                        positionTile(tileElement, tile.toRow, tile.toCol);
+                    }
+                });
+
+                // Animate merged tiles
+                moveData.mergedTiles.forEach(tile => {
+                    const tileElement = document.querySelector(`.tile[data-row="${tile.row}"][data-col="${tile.col}"]`);
+                    if (tileElement) {
+                        tileElement.classList.add('tile-merged');
+                        tileElement.textContent = tile.value;
+                        tileElement.className = `tile tile-${tile.value > 2048 ? 'super' : tile.value} tile-merged`;
+                    }
+                });
+
+                // Animate new tiles
+                if (moveData.newTile) {
+                    const newTile = document.createElement('div');
+                    newTile.className = `tile tile-${moveData.newTile.value > 2048 ? 'super' : moveData.newTile.value} tile-new`;
+                    newTile.textContent = moveData.newTile.value;
+                    newTile.dataset.row = moveData.newTile.row;
+                    newTile.dataset.col = moveData.newTile.col;
+                    positionTile(newTile, moveData.newTile.row, moveData.newTile.col);
+                    gridElement.appendChild(newTile);
+                }
+            }
+
+            function handleKeyPress(e) {
+                // Prevent rapid key presses
+                const now = Date.now();
+                if (now - lastMoveTime < 100) return;
+                lastMoveTime = now;
+
+                if (gameOver && !keepPlaying) return;
+
+                let moveData = null;
+                switch (e.key.toLowerCase()) {
+                    case 'arrowup':
+                    case 'w':
+                        moveData = moveUp();
+                        break;
+                    case 'arrowdown':
+                    case 's':
+                        moveData = moveDown();
+                        break;
+                    case 'arrowleft':
+                    case 'a':
+                        moveData = moveLeft();
+                        break;
+                    case 'arrowright':
+                    case 'd':
+                        moveData = moveRight();
+                        break;
+                    case 'z':
+                        if (e.ctrlKey || e.metaKey) break;
+                        undoMove();
+                        return;
+                    case 'n':
+                        initGame();
+                        return;
+                    case 't':
+                        toggleTheme();
+                        return;
+                    default:
+                        return;
+                }
+
+                if (moveData && moveData.moved) {
+                    const newTile = addRandomTile();
+                    moveData.newTile = newTile;
+                    
+                    animateTiles(moveData);
+                    setTimeout(() => {
+                        saveGameState();
+                        renderGrid();
+                        updateScore();
+                        checkGameOver();
+                        checkWin();
+                    }, 150); // Wait for animations to complete
+                }
+            }
+
+            function moveUp() {
+                let moved = false;
+                const movedTiles = [];
+                const mergedTiles = [];
+                const mergedPositions = [];
+                
+                for (let col = 0; col < gridSize; col++) {
+                    for (let row = 1; row < gridSize; row++) {
+                        if (grid[row][col] !== 0) {
+                            let currentRow = row;
+                            while (currentRow > 0 && grid[currentRow - 1][col] === 0) {
+                                grid[currentRow - 1][col] = grid[currentRow][col];
+                                grid[currentRow][col] = 0;
+                                movedTiles.push({
+                                    value: grid[currentRow - 1][col],
+                                    fromRow: currentRow,
+                                    fromCol: col,
+                                    toRow: currentRow - 1,
+                                    toCol: col
+                                });
+                                currentRow--;
+                                moved = true;
+                            }
+                            if (currentRow > 0 && 
+                                grid[currentRow - 1][col] === grid[currentRow][col] &&
+                                !mergedPositions.some(pos => pos.row === currentRow - 1 && pos.col === col)) {
+                                grid[currentRow - 1][col] *= 2;
+                                score += grid[currentRow - 1][col];
+                                mergedTiles.push({
+                                    row: currentRow - 1,
+                                    col: col,
+                                    value: grid[currentRow - 1][col]
+                                });
+                                mergedPositions.push({ row: currentRow - 1, col });
+                                grid[currentRow][col] = 0;
+                                moved = true;
+                                mergeCount++;
+                            }
+                        }
+                    }
+                }
+                
+                return { moved, movedTiles, mergedTiles };
+            }
+
+            function moveDown() {
+                let moved = false;
+                const movedTiles = [];
+                const mergedTiles = [];
+                const mergedPositions = [];
+                
+                for (let col = 0; col < gridSize; col++) {
+                    for (let row = gridSize - 2; row >= 0; row--) {
+                        if (grid[row][col] !== 0) {
+                            let currentRow = row;
+                            while (currentRow < gridSize - 1 && grid[currentRow + 1][col] === 0) {
+                                grid[currentRow + 1][col] = grid[currentRow][col];
+                                grid[currentRow][col] = 0;
+                                movedTiles.push({
+                                    value: grid[currentRow + 1][col],
+                                    fromRow: currentRow,
+                                    fromCol: col,
+                                    toRow: currentRow + 1,
+                                    toCol: col
+                                });
+                                currentRow++;
+                                moved = true;
+                            }
+                            if (currentRow < gridSize - 1 && 
+                                grid[currentRow + 1][col] === grid[currentRow][col] &&
+                                !mergedPositions.some(pos => pos.row === currentRow + 1 && pos.col === col)) {
+                                grid[currentRow + 1][col] *= 2;
+                                score += grid[currentRow + 1][col];
+                                mergedTiles.push({
+                                    row: currentRow + 1,
+                                    col: col,
+                                    value: grid[currentRow + 1][col]
+                                });
+                                mergedPositions.push({ row: currentRow + 1, col });
+                                grid[currentRow][col] = 0;
+                                moved = true;
+                                mergeCount++;
+                            }
+                        }
+                    }
+                }
+                
+                return { moved, movedTiles, mergedTiles };
+            }
+
+            function moveLeft() {
+                let moved = false;
+                const movedTiles = [];
+                const mergedTiles = [];
+                const mergedPositions = [];
+                
+                for (let row = 0; row < gridSize; row++) {
+                    for (let col = 1; col < gridSize; col++) {
+                        if (grid[row][col] !== 0) {
+                            let currentCol = col;
+                            while (currentCol > 0 && grid[row][currentCol - 1] === 0) {
+                                grid[row][currentCol - 1] = grid[row][currentCol];
+                                grid[row][currentCol] = 0;
+                                movedTiles.push({
+                                    value: grid[row][currentCol - 1],
+                                    fromRow: row,
+                                    fromCol: currentCol,
+                                    toRow: row,
+                                    toCol: currentCol - 1
+                                });
+                                currentCol--;
+                                moved = true;
+                            }
+                            if (currentCol > 0 && 
+                                grid[row][currentCol - 1] === grid[row][currentCol] &&
+                                !mergedPositions.some(pos => pos.row === row && pos.col === currentCol - 1)) {
+                                grid[row][currentCol - 1] *= 2;
+                                score += grid[row][currentCol - 1];
+                                mergedTiles.push({
+                                    row: row,
+                                    col: currentCol - 1,
+                                    value: grid[row][currentCol - 1]
+                                });
+                                mergedPositions.push({ row, col: currentCol - 1 });
+                                grid[row][currentCol] = 0;
+                                moved = true;
+                                mergeCount++;
+                            }
+                        }
+                    }
+                }
+                
+                return { moved, movedTiles, mergedTiles };
+            }
+
+            function moveRight() {
+                let moved = false;
+                const movedTiles = [];
+                const mergedTiles = [];
+                const mergedPositions = [];
+                
+                for (let row = 0; row < gridSize; row++) {
+                    for (let col = gridSize - 2; col >= 0; col--) {
+                        if (grid[row][col] !== 0) {
+                            let currentCol = col;
+                            while (currentCol < gridSize - 1 && grid[row][currentCol + 1] === 0) {
+                                grid[row][currentCol + 1] = grid[row][currentCol];
+                                grid[row][currentCol] = 0;
+                                movedTiles.push({
+                                    value: grid[row][currentCol + 1],
+                                    fromRow: row,
+                                    fromCol: currentCol,
+                                    toRow: row,
+                                    toCol: currentCol + 1
+                                });
+                                currentCol++;
+                                moved = true;
+                            }
+                            if (currentCol < gridSize - 1 && 
+                                grid[row][currentCol + 1] === grid[row][currentCol] &&
+                                !mergedPositions.some(pos => pos.row === row && pos.col === currentCol + 1)) {
+                                grid[row][currentCol + 1] *= 2;
+                                score += grid[row][currentCol + 1];
+                                mergedTiles.push({
+                                    row: row,
+                                    col: currentCol + 1,
+                                    value: grid[row][currentCol + 1]
+                                });
+                                mergedPositions.push({ row, col: currentCol + 1 });
+                                grid[row][currentCol] = 0;
+                                moved = true;
+                                mergeCount++;
+                            }
+                        }
+                    }
+                }
+                
+                return { moved, movedTiles, mergedTiles };
+            }
+
+            function updateScore() {
+                scoreElement.textContent = score;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestScoreElement.textContent = bestScore;
+                    localStorage.setItem('2048-best-score', bestScore);
+                }
+                undoBtn.disabled = gridHistory.length === 0;
+
+                // Check for achievements
+                checkAchievements();
+            }
+
+            function checkAchievements() {
+                // Check for tile value achievements
+                for (let row = 0; row < gridSize; row++) {
+                    for (let col = 0; col < gridSize; col++) {
+                        const value = grid[row][col];
+                        if (value >= 256 && !achievements.reached256) {
+                            achievements.reached256 = true;
+                            showAchievement("256 Reached!", "You created a 256 tile! +100 points", 100);
+                        }
+                        if (value >= 512 && !achievements.reached512) {
+                            achievements.reached512 = true;
+                            showAchievement("512 Reached!", "You created a 512 tile! +200 points", 200);
+                        }
+                        if (value >= 1024 && !achievements.reached1024) {
+                            achievements.reached1024 = true;
+                            showAchievement("1024 Reached!", "You created a 1024 tile! +300 points", 300);
+                        }
+                        if (value >= 2048 && !achievements.reached2048) {
+                            achievements.reached2048 = true;
+                            showAchievement("2048 Reached!", "You created a 2048 tile! +500 points", 500);
+                            triggerConfetti();
+                        }
+                    }
+                }
+
+                // Check for merge achievements
+                if (mergeCount >= 50 && !achievements.merged50) {
+                    achievements.merged50 = true;
+                    showAchievement("Merge Master 50", "You merged 50 tiles! +100 points", 100);
+                }
+                if (mergeCount >= 100 && !achievements.merged100) {
+                    achievements.merged100 = true;
+                    showAchievement("Merge Master 100", "You merged 100 tiles! +200 points", 200);
+                }
+            }
+
+            function showAchievement(title, description, bonus) {
+                achievementTitle.textContent = title;
+                achievementDesc.textContent = description;
+                achievementToast.classList.add('show');
+
+                // Add bonus to score if applicable
+                if (bonus) {
+                    score += bonus;
+                    updateScore();
+                }
+
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    achievementToast.classList.remove('show');
+                }, 3000);
+            }
+
+            function checkGameOver() {
+                // Check if there are any empty cells
+                for (let row = 0; row < gridSize; row++) {
+                    for (let col = 0; col < gridSize; col++) {
+                        if (grid[row][col] === 0) {
+                            return false;
+                        }
+                    }
+                }
+
+                // Check if there are any possible merges
+                for (let row = 0; row < gridSize; row++) {
+                    for (let col = 0; col < gridSize; col++) {
+                        const value = grid[row][col];
+                        if (
+                            (row < gridSize - 1 && grid[row + 1][col] === value) ||
+                            (col < gridSize - 1 && grid[row][col + 1] === value)
+                        ) {
+                            return false;
+                        }
+                    }
+                }
+
+                // If we get here, the game is over
+                gameOver = true;
+                if (gameMessageElement) {
+                    gameMessageElement.style.display = 'flex';
+                    gameMessageElement.classList.add('game-over');
+                    messageTextElement.textContent = 'Game Over!';
+                }
+                return true;
+            }
+
+            function checkWin() {
+                if (won || keepPlaying) return;
+
+                for (let row = 0; row < gridSize; row++) {
+                    for (let col = 0; col < gridSize; col++) {
+                        if (grid[row][col] === 2048) {
+                            won = true;
+                            if (gameMessageElement) {
+                                gameMessageElement.style.display = 'flex';
+                                gameMessageElement.classList.add('game-won');
+                                messageTextElement.textContent = 'You Win!';
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+
+            function triggerConfetti() {
+                const confettiSettings = { 
+                    particleCount: 150, 
+                    spread: 70, 
+                    origin: { y: 0.6 },
+                    colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff']
+                };
+                confetti(confettiSettings);
+                setTimeout(() => {
+                    confetti({
+                        ...confettiSettings,
+                        particleCount: 100,
+                        spread: 100
+                    });
+                }, 300);
+            }
+
+            function handleTouchStart(e) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                e.preventDefault();
+            }
+
+            function handleTouchMove(e) {
+                e.preventDefault();
+            }
+
+            function handleTouchEnd(e) {
+                if (gameOver && !keepPlaying) return;
+
+                touchEndX = e.changedTouches[0].clientX;
+                touchEndY = e.changedTouches[0].clientY;
+
+                const dx = touchEndX - touchStartX;
+                const dy = touchEndY - touchStartY;
+                const absDx = Math.abs(dx);
+                const absDy = Math.abs(dy);
+
+                if (Math.max(absDx, absDy) < 30) {
+                    e.preventDefault();
+                    return;
+                }
+
+                let moveData = null;
+                if (absDx > absDy) {
+                    // Horizontal swipe
+                    if (dx > 0) {
+                        moveData = moveRight();
+                    } else {
+                        moveData = moveLeft();
+                    }
+                } else {
+                    // Vertical swipe
+                    if (dy > 0) {
+                        moveData = moveDown();
+                    } else {
+                        moveData = moveUp();
+                    }
+                }
+
+                if (moveData && moveData.moved) {
+                    const newTile = addRandomTile();
+                    moveData.newTile = newTile;
+                    
+                    animateTiles(moveData);
+                    setTimeout(() => {
+                        saveGameState();
+                        renderGrid();
+                        updateScore();
+                        checkGameOver();
+                        checkWin();
+                    }, 150);
+                }
+
+                e.preventDefault();
+            }
+
+            function toggleTheme() {
+                document.body.classList.toggle('dark-mode');
+                const isDark = document.body.classList.contains('dark-mode');
+                themeIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+                localStorage.setItem('2048-dark-mode', isDark ? 'true' : 'false');
+            }
+
+            function saveGameState() {
+                // Save a deep copy of the current game state
+                gridHistory.push({
+                    grid: JSON.parse(JSON.stringify(grid)),
+                    score: score,
+                    won: won,
+                    keepPlaying: keepPlaying,
+                    mergeCount: mergeCount,
+                    achievements: {...achievements}
+                });
+                
+                // Limit history size
+                if (gridHistory.length > 20) {
+                    gridHistory.shift();
+                }
+                
+                // Also save to localStorage for persistence
+                localStorage.setItem('2048-game-state', JSON.stringify({
+                    grid,
+                    score,
+                    bestScore,
+                    gridSize,
+                    achievements,
+                    mergeCount
+                }));
+                
+                undoBtn.disabled = false;
+            }
+
+            function loadGame() {
+                // Load best score
+                bestScore = parseInt(localStorage.getItem('2048-best-score')) || 0;
+                bestScoreElement.textContent = bestScore;
+
+                // Load saved game if available
+                const savedGame = localStorage.getItem('2048-game-state');
+                if (savedGame) {
+                    const gameState = JSON.parse(savedGame);
+                    grid = gameState.grid || Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+                    score = gameState.score || 0;
+                    gridSize = gameState.gridSize || 4;
+                    achievements = gameState.achievements || {
+                        reached256: false,
+                        reached512: false,
+                        reached1024: false,
+                        reached2048: false,
+                        merged50: false,
+                        merged100: false
+                    };
+                    mergeCount = gameState.mergeCount || 0;
+                    scoreElement.textContent = score;
+                }
+
+                // Initialize theme (light mode by default)
+                const savedTheme = localStorage.getItem('2048-dark-mode');
+                if (savedTheme === 'true') {
+                    document.body.classList.add('dark-mode');
+                    themeIcon.className = 'fas fa-sun';
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    themeIcon.className = 'fas fa-moon';
+                }
+            }
+
+            function undoMove() {
+                if (gridHistory.length === 0) return;
+
+                const lastState = gridHistory.pop();
+                grid = lastState.grid;
+                score = lastState.score;
+                won = lastState.won;
+                keepPlaying = lastState.keepPlaying;
+                mergeCount = lastState.mergeCount;
+                achievements = lastState.achievements;
+                
+                renderGrid();
+                updateScore();
+                
+                if (won && !keepPlaying) {
+                    if (gameMessageElement) {
+                        gameMessageElement.style.display = 'flex';
+                        gameMessageElement.classList.add('game-won');
+                    }
+                } else {
+                    if (gameMessageElement) {
+                        gameMessageElement.style.display = 'none';
+                        gameMessageElement.classList.remove('game-won', 'game-over');
+                    }
+                }
+                
+                gameOver = false;
+                undoBtn.disabled = gridHistory.length === 0;
+            }
+        });
+    </script>
+</body>
+</html>
