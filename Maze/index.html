@@ -158,10 +158,12 @@
 
         .cell.start {
             background-color: var(--start-color);
+            animation: pulse 2s infinite;
         }
 
         .cell.end {
             background-color: var(--end-color);
+            animation: pulse 2s infinite;
         }
 
         .cell.path {
@@ -182,6 +184,7 @@
             transform: scale(1.1);
             z-index: 2;
             box-shadow: 0 0 15px rgba(255, 193, 7, 0.7);
+            animation: pulse 0.5s infinite alternate;
         }
 
         .cell.hidden {
@@ -192,11 +195,20 @@
             animation: fadeIn 0.5s ease-out;
         }
 
+        .cell.hint {
+            animation: hintPulse 1s ease-out infinite;
+        }
+
         .controls {
             background-color: var(--cell-bg);
             border-radius: 10px;
             padding: 20px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .controls:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
         .stats-card {
@@ -205,6 +217,12 @@
             padding: 15px;
             margin-bottom: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stats-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
         }
 
         .achievement-badge {
@@ -217,6 +235,11 @@
             color: white;
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .achievement-badge:hover {
+            transform: scale(1.05);
         }
 
         .achievement-badge.locked {
@@ -249,6 +272,8 @@
             font-size: 1.5rem;
             font-weight: bold;
             color: var(--warning-color);
+            display: flex;
+            align-items: center;
         }
 
         .loading-overlay {
@@ -286,6 +311,42 @@
             animation: particle-fade 1s ease-out forwards;
         }
 
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .celebration.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .celebration h1 {
+            font-size: 3rem;
+            color: var(--warning-color);
+            text-shadow: 0 0 10px rgba(255, 193, 7, 0.7);
+            margin-bottom: 1rem;
+            animation: textGlow 1.5s ease-in-out infinite alternate;
+        }
+
+        .celebration p {
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -316,6 +377,23 @@
             100% { transform: scale(1); background-color: var(--cell-bg); }
         }
 
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes textGlow {
+            0% { text-shadow: 0 0 10px rgba(255, 193, 7, 0.7); }
+            100% { text-shadow: 0 0 20px rgba(255, 193, 7, 0.9), 0 0 30px rgba(255, 193, 7, 0.5); }
+        }
+
+        @keyframes hintPulse {
+            0% { box-shadow: 0 0 0 0 rgba(13, 202, 240, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(13, 202, 240, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(13, 202, 240, 0); }
+        }
+
         .modal-achievement {
             animation: achievementPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
@@ -329,33 +407,54 @@
         .btn-primary {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
+            transition: all 0.3s ease;
         }
 
         .btn-primary:hover {
             background-color: #5a32a3;
             border-color: #5a32a3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(111, 66, 193, 0.4);
         }
 
         .btn-outline-primary {
             color: var(--primary-color);
             border-color: var(--primary-color);
+            transition: all 0.3s ease;
         }
 
         .btn-outline-primary:hover {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(111, 66, 193, 0.4);
         }
 
         .form-range::-webkit-slider-thumb {
             background: var(--primary-color);
+            transition: all 0.2s ease;
+        }
+
+        .form-range::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
         }
 
         .form-range::-moz-range-thumb {
             background: var(--primary-color);
+            transition: all 0.2s ease;
+        }
+
+        .form-range::-moz-range-thumb:hover {
+            transform: scale(1.1);
         }
 
         .form-range::-ms-thumb {
             background: var(--primary-color);
+            transition: all 0.2s ease;
+        }
+
+        .form-range::-ms-thumb:hover {
+            transform: scale(1.1);
         }
 
         .tooltip-inner {
@@ -416,16 +515,24 @@
             cursor: pointer;
         }
 
+        .hex-cell:hover {
+            transform: scale(1.05);
+            z-index: 1;
+        }
+
         .hex-cell.start {
             background-color: var(--start-color);
+            animation: pulse 2s infinite;
         }
 
         .hex-cell.end {
             background-color: var(--end-color);
+            animation: pulse 2s infinite;
         }
 
         .hex-cell.path {
             background-color: var(--path-color);
+            animation: pathReveal 0.3s ease-out;
         }
 
         .hex-cell.wall {
@@ -441,6 +548,31 @@
             transform: scale(1.1);
             z-index: 2;
             box-shadow: 0 0 15px rgba(255, 193, 7, 0.7);
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        .hex-cell.hidden {
+            background-color: var(--theme-bg);
+        }
+
+        .hex-cell.hint {
+            animation: hintPulse 1s ease-out infinite;
+        }
+
+        /* Celebration fireworks */
+        .firework {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.8);
+            animation: firework 1s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes firework {
+            0% { transform: translate(0, 0); opacity: 1; width: 5px; height: 5px; }
+            100% { transform: translate(var(--tx), var(--ty)); opacity: 0; width: 2px; height: 2px; }
         }
 
         /* Responsive adjustments */
@@ -458,6 +590,12 @@
             .hex-row.even {
                 margin-left: 32px;
             }
+            .celebration h1 {
+                font-size: 2rem;
+            }
+            .celebration p {
+                font-size: 1.2rem;
+            }
         }
 
         @media (max-width: 576px) {
@@ -474,6 +612,12 @@
             .hex-row.even {
                 margin-left: 22px;
             }
+            .celebration h1 {
+                font-size: 1.5rem;
+            }
+            .celebration p {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
@@ -482,6 +626,15 @@
     <div class="loading-overlay">
         <div class="spinner"></div>
         <h3 id="loadingText">Generating Maze...</h3>
+    </div>
+
+    <!-- Celebration Overlay -->
+    <div class="celebration" id="celebration">
+        <h1 id="celebrationTitle">Congratulations!</h1>
+        <p id="celebrationMessage">You solved the maze!</p>
+        <button class="btn btn-primary btn-lg" id="continueBtn">
+            <i class="bi bi-arrow-right-circle me-2"></i> Continue
+        </button>
     </div>
 
     <!-- Navigation -->
@@ -939,6 +1092,10 @@
             const gameInstructions = document.getElementById('gameInstructions');
             const moveCounter = document.getElementById('moveCounter');
             const movesLeftElement = document.getElementById('movesLeft');
+            const celebrationElement = document.getElementById('celebration');
+            const celebrationTitle = document.getElementById('celebrationTitle');
+            const celebrationMessage = document.getElementById('celebrationMessage');
+            const continueBtn = document.getElementById('continueBtn');
             
             // Stats elements
             const gamesPlayedElement = document.getElementById('gamesPlayed');
@@ -973,6 +1130,8 @@
                 undoBtn.addEventListener('click', undoMove);
                 redoBtn.addEventListener('click', redoMove);
                 themeToggle.addEventListener('click', toggleTheme);
+                continueBtn.addEventListener('click', hideCelebration);
+                
                 themeOptions.forEach(option => {
                     option.addEventListener('click', setTheme);
                 });
@@ -1004,9 +1163,6 @@
                     title: 'Reveal the next correct move',
                     placement: 'bottom'
                 });
-                
-                // Start first game
-                // startNewGame();
             }
             
             // Load statistics from localStorage
@@ -1150,19 +1306,69 @@
                 localStorage.setItem('mazeGameColorTheme', theme);
             }
             
-            // Check saved theme preference
-            function checkThemePreference() {
-                const savedTheme = localStorage.getItem('mazeGameTheme');
-                if (savedTheme) {
-                    document.documentElement.setAttribute('data-bs-theme', savedTheme);
-                    themeToggle.innerHTML = savedTheme === 'dark' 
-                        ? '<i class="bi bi-sun-fill"></i>' 
-                        : '<i class="bi bi-moon-fill"></i>';
-                }
+            // Show celebration overlay
+            function showCelebration() {
+                const messages = [
+                    "Amazing!",
+                    "Incredible!",
+                    "You're a Maze Master!",
+                    "Well done!",
+                    "Fantastic!",
+                    "Brilliant!"
+                ];
                 
-                const savedColorTheme = localStorage.getItem('mazeGameColorTheme');
-                if (savedColorTheme && savedColorTheme !== 'default') {
-                    document.documentElement.classList.add(`theme-${savedColorTheme}`);
+                const message = messages[Math.floor(Math.random() * messages.length)];
+                celebrationTitle.textContent = "Congratulations!";
+                celebrationMessage.textContent = `You solved the maze in ${formatTime(seconds)}! ${message}`;
+                
+                // Create fireworks
+                createFireworks();
+                
+                celebrationElement.classList.add('show');
+            }
+            
+            // Hide celebration overlay
+            function hideCelebration() {
+                celebrationElement.classList.remove('show');
+                
+                // For timed mode, start a new game automatically
+                if (gameMode === 'timed') {
+                    startNewGame();
+                }
+            }
+            
+            // Create fireworks effect
+            function createFireworks() {
+                const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+                
+                for (let i = 0; i < 30; i++) {
+                    setTimeout(() => {
+                        const firework = document.createElement('div');
+                        firework.className = 'firework';
+                        firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                        
+                        // Random position
+                        const x = Math.random() * window.innerWidth;
+                        const y = Math.random() * window.innerHeight * 0.8;
+                        firework.style.left = `${x}px`;
+                        firework.style.top = `${y}px`;
+                        
+                        // Random direction
+                        const angle = Math.random() * Math.PI * 2;
+                        const distance = 50 + Math.random() * 100;
+                        const tx = Math.cos(angle) * distance;
+                        const ty = Math.sin(angle) * distance;
+                        
+                        firework.style.setProperty('--tx', `${tx}px`);
+                        firework.style.setProperty('--ty', `${ty}px`);
+                        
+                        celebrationElement.appendChild(firework);
+                        
+                        // Remove after animation
+                        setTimeout(() => {
+                            firework.remove();
+                        }, 1000);
+                    }, i * 100);
                 }
             }
             
@@ -1695,6 +1901,9 @@
                             cell.classList.add('current');
                         }
                         
+                        // Add click event
+                        cell.addEventListener('click', () => handleCellClick(x, y));
+                        
                         mazeElement.appendChild(cell);
                     }
                 }
@@ -1741,6 +1950,9 @@
                         if (x === currentCell[0] && y === currentCell[1]) {
                             cell.classList.add('current');
                         }
+                        
+                        // Add click event
+                        cell.addEventListener('click', () => handleCellClick(x, y));
                         
                         row.appendChild(cell);
                     }
@@ -1932,6 +2144,7 @@
                 // Check for win
                 if (x === endCell[0] && y === endCell[1]) {
                     gameWon();
+                    return;
                 }
                 
                 // Create particle effect
@@ -2023,6 +2236,7 @@
                 // Check for win
                 if (nextMove[0] === endCell[0] && nextMove[1] === endCell[1]) {
                     gameWon();
+                    return;
                 }
                 
                 updateUndoRedoButtons();
@@ -2179,11 +2393,6 @@
                 // Celebrate!
                 triggerConfetti();
                 showCelebration();
-                
-                // For timed mode, start a new game automatically
-                if (gameMode === 'timed') {
-                    setTimeout(startNewGame, 3000);
-                }
             }
             
             // Handle game lost
@@ -2207,6 +2416,11 @@
                 gameInstructions.textContent = gameMode === 'timed' ? 
                     'Time\'s up! New maze starting...' : 
                     'Game Over! Try again.';
+                
+                // For timed mode, start a new game automatically after delay
+                if (gameMode === 'timed') {
+                    setTimeout(startNewGame, 3000);
+                }
             }
             
             // Find the solution path
@@ -2319,12 +2533,13 @@
                         // Pulse animation
                         cellElement.style.animation = 'none';
                         void cellElement.offsetWidth; // Trigger reflow
-                        cellElement.style.animation = 'pathReveal 0.5s ease-out 2 alternate';
+                        cellElement.style.animation = 'hintPulse 1s ease-out infinite';
                         
                         // Add temporary class
                         cellElement.classList.add('hint');
                         setTimeout(() => {
                             cellElement.classList.remove('hint');
+                            cellElement.style.animation = '';
                         }, 1000);
                     }
                 }
@@ -2351,21 +2566,6 @@
                         colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff']
                     });
                 }, 300);
-            }
-            
-            // Show celebration message
-            function showCelebration() {
-                const messages = [
-                    "Amazing!",
-                    "Incredible!",
-                    "You're a Maze Master!",
-                    "Well done!",
-                    "Fantastic!",
-                    "Brilliant!"
-                ];
-                
-                const message = messages[Math.floor(Math.random() * messages.length)];
-                gameInstructions.textContent = message;
             }
             
             // Check and unlock achievements
@@ -2564,7 +2764,7 @@
             }
             
             // Check saved theme preference
-            checkThemePreference();
+            //checkThemePreference();
             
             // Initialize the game
             init();

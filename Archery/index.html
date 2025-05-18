@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Advanced Bullseye Archery Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    :root {
+      --day-bg-1: #1a2a6c;
+      --day-bg-2: #b21f1f;
+      --day-bg-3: #fdbb2d;
+      --night-bg-1: #0f0c29;
+      --night-bg-2: #302b63;
+      --night-bg-3: #24243e;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, var(--day-bg-1), var(--day-bg-2), var(--day-bg-3));
+      font-family: 'Arial', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: background 1s ease;
+    }
+
+    body.night-mode {
+      background: linear-gradient(135deg, var(--night-bg-1), var(--night-bg-2), var(--night-bg-3));
+    }
+
+    .game-container {
+      position: relative;
+      width: 100%;
+      height: 80vh;
+      max-width: 1000px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    .background {
+      position: absolute;
+      width: 300%;
+      height: 100%;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200"><path fill="%2342763a" d="M0,200 L0,150 C100,120 200,140 300,130 C400,120 500,100 600,110 C700,120 800,160 900,150 L1000,160 L1000,200 Z"/></svg>') repeat-x;
+      background-size: contain;
+      background-position: bottom;
+      bottom: 0;
+      left: 0;
+      z-index: -1;
+      animation: parallax 60s linear infinite;
+    }
+
+    .mountains {
+      position: absolute;
+      width: 300%;
+      height: 100%;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200"><path fill="%23305a30" d="M0,200 L0,100 C150,50 250,80 350,70 C450,60 550,30 650,50 C750,70 850,150 950,130 L1000,140 L1000,200 Z"/></svg>') repeat-x;
+      background-size: contain;
+      background-position: bottom;
+      bottom: 0;
+      left: 0;
+      z-index: -2;
+      animation: parallax 120s linear infinite;
+    }
+
+    .sky {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, rgba(135, 206, 235, 0.3) 0%, transparent 100%);
+      z-index: -3;
+    }
+
+    .night-sky {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, rgba(0, 0, 50, 0.7) 0%, transparent 100%);
+      z-index: -3;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    body.night-mode .night-sky {
+      opacity: 1;
+    }
+
+    @keyframes parallax {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-66.666%); }
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 10px rgba(0,0,0,0.3));
+    }
+
+    .instructions {
+      color: white;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 1.2rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      opacity: 0.8;
+      animation: pulse 2s infinite;
+    }
+
+    .game-controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .control-btn {
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .control-btn:hover {
+      background: rgba(0,0,0,0.7);
+    }
+
+    .score-display {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      color: white;
+      font-size: 1.5rem;
+      background: rgba(0,0,0,0.5);
+      padding: 10px 20px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .score-icon {
+      margin-right: 10px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .power-meter {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 20px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .power-level {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(to right, #4CAF50, #FFC107, #F44336);
+      transition: width 0.1s;
+    }
+
+    .wind-indicator {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      background: rgba(0,0,0,0.5);
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .wind-arrow {
+      margin-left: 5px;
+      transition: transform 0.3s;
+    }
+
+    .difficulty-selector {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+
+    .difficulty-btn {
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .difficulty-btn.active {
+      background: #88ce02;
+    }
+
+    .timer {
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      color: white;
+      font-size: 1.2rem;
+      background: rgba(0,0,0,0.5);
+      padding: 5px 15px;
+      border-radius: 20px;
+    }
+
+    .particle {
+      position: absolute;
+      background: #F4531C;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+
+    @keyframes bullseyePulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @media (max-width: 768px) {
+      .game-container {
+        height: 70vh;
+      }
+
+      .instructions {
+        font-size: 1rem;
+      }
+
+      .score-display {
+        font-size: 1.2rem;
+        padding: 8px 15px;
+      }
+
+      .wind-indicator {
+        top: 60px;
+      }
+    }
+
+    @media (orientation: portrait) {
+      .game-container {
+        width: 100%;
+        height: 60vh;
+      }
+
+      .background, .mountains {
+        background-size: cover;
+      }
+
+      .difficulty-selector {
+        bottom: 80px;
+        flex-direction: column;
+      }
+
+      .power-meter {
+        bottom: 120px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="sky"></div>
+    <div class="night-sky"></div>
+    <div class="mountains"></div>
+    <div class="background"></div>
+
+    <div class="game-controls">
+      <button class="control-btn" id="pause-btn">Pause</button>
+      <button class="control-btn" id="restart-btn">Restart</button>
+      <button class="control-btn" id="daynight-btn">Night Mode</button>
+    </div>
+
+    <div class="score-display">
+      <svg class="score-icon" viewBox="0 0 24 24">
+        <path fill="white" d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.5,8.1 14.5,9.5C14.5,10.9 13.4,12 12,12C10.6,12 9.5,10.9 9.5,9.5C9.5,8.1 10.6,7 12,7M12,14.5C14.33,14.5 16.31,15.72 17.32,17.5H6.68C7.69,15.72 9.67,14.5 12,14.5Z" />
+      </svg>
+      <span id="score">0</span>
+    </div>
+
+    <div class="wind-indicator">
+      Wind: <span id="wind-value">0</span> m/s <span id="wind-arrow" class="wind-arrow">→</span>
+    </div>
+
+    <div class="timer" id="timer">60s</div>
+
+    <div class="difficulty-selector">
+      <button class="difficulty-btn active" data-difficulty="easy">Easy</button>
+      <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+      <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+      <button class="difficulty-btn" data-difficulty="timed">Timed</button>
+    </div>
+
+    <div class="power-meter">
+      <div class="power-level" id="power-level"></div>
+    </div>
+
+    <svg id="game" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 400" overflow="visible">
+      <linearGradient id="ArcGradient">
+        <stop offset="0" stop-color="#fff" stop-opacity=".2"/>
+        <stop offset="50%" stop-color="#fff" stop-opacity="0"/>
+      </linearGradient>
+      
+      <path id="arc" fill="none" stroke="url(#ArcGradient)" stroke-width="4" d="M100,250c250-400,550-400,800,0" pointer-events="none"/>
+      
+      <defs>
+        <g id="arrow">
+          <line x2="60" fill="none" stroke="#888" stroke-width="2" />
+          <polygon fill="#888" points="64 0 58 2 56 0 58 -2" />
+          <polygon fill="#88ce02" points="2 -3 -4 -3 -1 0 -4 3 2 3 5 0" />
+        </g>
+        
+        <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+
+        <g id="target-easy">
+          <path fill="#FFF" d="M924.2,274.2c-21.5,21.5-45.9,19.9-52,3.2c-4.4-12.1,2.4-29.2,14.2-41c11.8-11.8,29-18.6,41-14.2 C944.1,228.3,945.7,252.8,924.2,274.2z" />
+          <path fill="#F4531C" d="M915.8,265.8c-14.1,14.1-30.8,14.6-36,4.1c-4.1-8.3,0.5-21.3,9.7-30.5s22.2-13.8,30.5-9.7 C930.4,235,929.9,251.7,915.8,265.8z" />
+          <path fill="#FFF" d="M908.9,258.9c-8,8-17.9,9.2-21.6,3.5c-3.2-4.9-0.5-13.4,5.6-19.5c6.1-6.1,14.6-8.8,19.5-5.6 C918.1,241,916.9,250.9,908.9,258.9z" />
+          <path fill="#F4531C" d="M903.2,253.2c-2.9,2.9-6.7,3.6-8.3,1.7c-1.5-1.8-0.6-5.4,2-8c2.6-2.6,6.2-3.6,8-2 C906.8,246.5,906.1,250.2,903.2,253.2z" />
+        </g>
+
+        <g id="target-medium">
+          <path fill="#FFF" d="M924.2,274.2c-21.5,21.5-45.9,19.9-52,3.2c-4.4-12.1,2.4-29.2,14.2-41c11.8-11.8,29-18.6,41-14.2 C944.1,228.3,945.7,252.8,924.2,274.2z" />
+          <path fill="#F4531C" d="M915.8,265.8c-14.1,14.1-30.8,14.6-36,4.1c-4.1-8.3,0.5-21.3,9.7-30.5s22.2-13.8,30.5-9.7 C930.4,235,929.9,251.7,915.8,265.8z" />
+          <path fill="#FFF" d="M908.9,258.9c-8,8-17.9,9.2-21.6,3.5c-3.2-4.9-0.5-13.4,5.6-19.5c6.1-6.1,14.6-8.8,19.5-5.6 C918.1,241,916.9,250.9,908.9,258.9z" />
+        </g>
+
+        <g id="target-hard">
+          <path fill="#FFF" d="M924.2,274.2c-21.5,21.5-45.9,19.9-52,3.2c-4.4-12.1,2.4-29.2,14.2-41c11.8-11.8,29-18.6,41-14.2 C944.1,228.3,945.7,252.8,924.2,274.2z" />
+          <path fill="#F4531C" d="M915.8,265.8c-14.1,14.1-30.8,14.6-36,4.1c-4.1-8.3,0.5-21.3,9.7-30.5s22.2-13.8,30.5-9.7 C930.4,235,929.9,251.7,915.8,265.8z" />
+        </g>
+      </defs>
+      
+      <use id="main-target" xlink:href="#target-easy" filter="url(#glow)" x="0" y="0" />
+      
+      <g id="bow" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke" pointer-events="none">
+        <polyline fill="none" stroke="#ddd" stroke-linecap="round" points="88,200 88,250 88,300"/>
+        <path fill="none" stroke="#88ce02" stroke-width="3" stroke-linecap="round" d="M88,300 c0-10.1,12-25.1,12-50s-12-39.9-12-50"/>
+      </g>
+      
+      <g class="arrow-angle"><use x="100" y="250" xlink:href="#arrow"/></g>
+      
+      <clipPath id="mask">
+        <polygon opacity=".5" points="0,0 1500,0 1500,200 970,290 950,240 925,220 875,280 890,295 920,310 0,350" pointer-events="none"/>
+      </clipPath>
+      
+      <g class="arrows" clip-path="url(#mask)" pointer-events="none"></g>
+      
+      <g class="miss" fill="#aaa" opacity="0" transform="translate(0, 100)">
+        <path d="M358 194L363 118 386 120 400 153 416 121 440 119 446 203 419 212 416 163 401 180 380 160 381 204"/>
+        <path d="M450 120L458 200 475 192 474 121"/>
+        <path d="M537 118L487 118 485 160 515 162 509 177 482 171 482 193 529 199 538 148 501 146 508 133 537 137"/>
+        <path d="M540 202L543 178 570 186 569 168 544 167 546 122 590 116 586 142 561 140 560 152 586 153 586 205"/>
+        <path d="M595,215l5-23l31,0l-5,29L595,215z M627,176l13-70l-41-0l-0,70L627,176z"/>
+      </g>
+      
+      <g class="bullseye" fill="#F4531C" opacity="0" transform="translate(0, 0)">
+        <path d="M322,159l15-21l-27-13l-32,13l15,71l41-14l7-32L322,159z M292,142h20l3,8l-16,8 L292,142z M321,182l-18,9l-4-18l23-2V182z"/>
+        <path d="M340 131L359 125 362 169 381 167 386 123 405 129 392 183 351 186z"/>
+        <path d="M413 119L402 188 450 196 454 175 422 175 438 120z"/>
+        <path d="M432 167L454 169 466 154 451 151 478 115 453 113z"/>
+        <path d="M524 109L492 112 466 148 487 155 491 172 464 167 463 184 502 191 513 143 487 141 496 125 517 126z"/>
+        <path d="M537 114L512 189 558 199 566 174 533 175 539 162 553 164 558 150 543 145 547 134 566 148 575 124z"/>
+        <path d="M577 118L587 158 570 198 587 204 626 118 606 118 598 141 590 112z"/>
+        <path d="M635 122L599 198 643 207 649 188 624 188 630 170 639 178 645 162 637 158 649 143 662 151 670 134z"/>
+        <path d="M649,220l4-21l28,4l-6,25L649,220z M681,191l40-79l-35-8L659,184L681,191z"/>
+      </g>
+      
+      <g class="hit" fill="#ffcc00" opacity="0" transform="translate(180, -80) rotate(12)">
+        <path d="M383 114L385 195 407 191 406 160 422 155 418 191 436 189 444 112 423 119 422 141 407 146 400 113"/>
+        <path d="M449 185L453 113 477 112 464 186"/>
+        <path d="M486 113L484 130 506 130 481 188 506 187 520 131 540 135 545 119"/>
+        <path d="M526,195l5-20l22,5l-9,16L526,195z M558,164l32-44l-35-9l-19,51L558,164z"/>
+      </g>
+    </svg>
+  </div>
+  
+  <div class="instructions">Draw back an arrow and release to shoot!</div>
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.1/TweenMax.min.js'></script>
+  <script src='//s3-us-west-2.amazonaws.com/s.cdpn.io/16327/MorphSVGPlugin.min.js'></script>
+  
+  <script>
+    // Game state
+    const gameState = {
+      score: 0,
+      highScore: localStorage.getItem('bullseyeHighScore') || 0,
+      difficulty: 'easy',
+      windSpeed: 0,
+      windDirection: 1, // 1 for right, -1 for left
+      isPaused: false,
+      isNightMode: false,
+      timedMode: false,
+      timeLeft: 60,
+      gameInterval: null,
+      achievements: {
+        bullseyeStreak: 0,
+        totalBullseyes: 0,
+        totalShots: 0
+      }
+    };
+
+    // DOM elements
+    const elements = {
+      game: document.querySelector("#game"),
+      score: document.getElementById("score"),
+      highScore: document.getElementById("high-score"),
+      windValue: document.getElementById("wind-value"),
+      windArrow: document.getElementById("wind-arrow"),
+      powerLevel: document.getElementById("power-level"),
+      timer: document.getElementById("timer"),
+      pauseBtn: document.getElementById("pause-btn"),
+      restartBtn: document.getElementById("restart-btn"),
+      daynightBtn: document.getElementById("daynight-btn"),
+      mainTarget: document.getElementById("main-target"),
+      body: document.body
+    };
+
+    // Game variables
+    let cursor = elements.game.createSVGPoint();
+    let arrows = document.querySelector(".arrows");
+    let randomAngle = 0;
+    let currentDistance = 0;
+    let animationFrameId;
+    let particles = [];
+    let targetPositions = [];
+    let activeTargets = [];
+
+    // Initialize game
+    init();
+
+    function init() {
+      // Set up event listeners
+      setupEventListeners();
+      
+      // Initialize target positions
+      setupTargets();
+      
+      // Start wind effect
+      updateWind();
+      
+      // Start game loop
+      gameLoop();
+      
+      // Load high score
+      updateScoreDisplay();
+    }
+
+    function setupEventListeners() {
+      // Mouse/touch events
+      window.addEventListener("mousedown", draw);
+      window.addEventListener("touchstart", handleTouchStart);
+      
+      // Control buttons
+      elements.pauseBtn.addEventListener("click", togglePause);
+      elements.restartBtn.addEventListener("click", restartGame);
+      elements.daynightBtn.addEventListener("click", toggleDayNight);
+      
+      // Difficulty buttons
+      document.querySelectorAll(".difficulty-btn").forEach(btn => {
+        btn.addEventListener("click", () => setDifficulty(btn.dataset.difficulty));
+      });
+    }
+
+    function setupTargets() {
+      // Clear any existing targets
+      activeTargets.forEach(target => {
+        if (target.element && target.element.parentNode) {
+          target.element.parentNode.removeChild(target.element);
+        }
+      });
+      activeTargets = [];
+      
+      // Set up targets based on difficulty
+      if (gameState.difficulty === 'easy') {
+        // Single large target
+        elements.mainTarget.setAttribute('xlink:href', '#target-easy');
+        elements.mainTarget.setAttribute('transform', 'translate(0, 0)');
+        activeTargets.push({
+          element: elements.mainTarget,
+          x: 900,
+          y: 249.5,
+          lineSegment: {
+            x1: 875,
+            y1: 280,
+            x2: 925,
+            y2: 220
+          }
+        });
+      } else if (gameState.difficulty === 'medium') {
+        // Two medium targets
+        elements.mainTarget.setAttribute('xlink:href', '#target-medium');
+        elements.mainTarget.setAttribute('transform', 'translate(0, 0)');
+        activeTargets.push({
+          element: elements.mainTarget,
+          x: 900,
+          y: 249.5,
+          lineSegment: {
+            x1: 875,
+            y1: 280,
+            x2: 925,
+            y2: 220
+          }
+        });
+        
+        // Add a second target
+        const secondTarget = document.createElementNS("http://www.w3.org/2000/svg", "use");
+        secondTarget.setAttributeNS('http://www.w3.org/1999/xlink', 'href', "#target-medium");
+        secondTarget.setAttribute('transform', 'translate(-200, -50)');
+        secondTarget.setAttribute('filter', 'url(#glow)');
+        elements.game.appendChild(secondTarget);
+        
+        activeTargets.push({
+          element: secondTarget,
+          x: 700,
+          y: 199.5,
+          lineSegment: {
+            x1: 675,
+            y1: 230,
+            x2: 725,
+            y2: 170
+          }
+        });
+      } else if (gameState.difficulty === 'hard') {
+        // Three small moving targets
+        elements.mainTarget.setAttribute('xlink:href', '#target-hard');
+        elements.mainTarget.setAttribute('transform', 'translate(0, 0)');
+        activeTargets.push({
+          element: elements.mainTarget,
+          x: 900,
+          y: 249.5,
+          lineSegment: {
+            x1: 875,
+            y1: 280,
+            x2: 925,
+            y2: 220
+          },
+          speed: 0.5,
+          direction: 1
+        });
+        
+        // Add second target
+        const secondTarget = document.createElementNS("http://www.w3.org/2000/svg", "use");
+        secondTarget.setAttributeNS('http://www.w3.org/1999/xlink', 'href', "#target-hard");
+        secondTarget.setAttribute('transform', 'translate(-200, -50)');
+        secondTarget.setAttribute('filter', 'url(#glow)');
+        elements.game.appendChild(secondTarget);
+        
+        activeTargets.push({
+          element: secondTarget,
+          x: 700,
+          y: 199.5,
+          lineSegment: {
+            x1: 675,
+            y1: 230,
+            x2: 725,
+            y2: 170
+          },
+          speed: 0.8,
+          direction: -1
+        });
+        
+        // Add third target
+        const thirdTarget = document.createElementNS("http://www.w3.org/2000/svg", "use");
+        thirdTarget.setAttributeNS('http://www.w3.org/1999/xlink', 'href', "#target-hard");
+        thirdTarget.setAttribute('transform', 'translate(-400, 30)');
+        thirdTarget.setAttribute('filter', 'url(#glow)');
+        elements.game.appendChild(thirdTarget);
+        
+        activeTargets.push({
+          element: thirdTarget,
+          x: 500,
+          y: 279.5,
+          lineSegment: {
+            x1: 475,
+            y1: 310,
+            x2: 525,
+            y2: 250
+          },
+          speed: 1.2,
+          direction: 1
+        });
+      } else if (gameState.difficulty === 'timed') {
+        // Timed mode - multiple static targets
+        gameState.timedMode = true;
+        gameState.timeLeft = 60;
+        elements.timer.style.display = 'block';
+        updateTimer();
+        
+        elements.mainTarget.setAttribute('xlink:href', '#target-medium');
+        elements.mainTarget.setAttribute('transform', 'translate(0, 0)');
+        activeTargets.push({
+          element: elements.mainTarget,
+          x: 900,
+          y: 249.5,
+          lineSegment: {
+            x1: 875,
+            y1: 280,
+            x2: 925,
+            y2: 220
+          }
+        });
+        
+        // Add additional targets for timed mode
+        for (let i = 0; i < 3; i++) {
+          const newTarget = document.createElementNS("http://www.w3.org/2000/svg", "use");
+          newTarget.setAttributeNS('http://www.w3.org/1999/xlink', 'href', "#target-medium");
+          newTarget.setAttribute('transform', `translate(${-200 - (i * 150)}, ${-50 + (i * 40)})`);
+          newTarget.setAttribute('filter', 'url(#glow)');
+          elements.game.appendChild(newTarget);
+          
+          activeTargets.push({
+            element: newTarget,
+            x: 700 - (i * 150),
+            y: 199.5 + (i * 40),
+            lineSegment: {
+              x1: 675 - (i * 150),
+              y1: 230 + (i * 40),
+              x2: 725 - (i * 150),
+              y2: 170 + (i * 40)
+            }
+          });
+        }
+        
+        // Start timer
+        gameState.gameInterval = setInterval(() => {
+          if (!gameState.isPaused) {
+            gameState.timeLeft--;
+            updateTimer();
+            
+            if (gameState.timeLeft <= 0) {
+              clearInterval(gameState.gameInterval);
+              endTimedMode();
+            }
+          }
+        }, 1000);
+      }
+    }
+
+    function updateTimer() {
+      elements.timer.textContent = `${gameState.timeLeft}s`;
+      
+      // Change color when time is running low
+      if (gameState.timeLeft <= 10) {
+        elements.timer.style.color = '#ff5555';
+        elements.timer.style.animation = 'pulse 0.5s infinite';
+      } else {
+        elements.timer.style.color = 'white';
+        elements.timer.style.animation = 'none';
+      }
+    }
+
+    function endTimedMode() {
+      gameState.timedMode = false;
+      elements.timer.style.display = 'none';
+      
+      // Show final score
+      alert(`Time's up! Your score: ${gameState.score}`);
+      
+      // Update high score if needed
+      if (gameState.score > gameState.highScore) {
+        gameState.highScore = gameState.score;
+        localStorage.setItem('bullseyeHighScore', gameState.highScore);
+        updateScoreDisplay();
+      }
+      
+      // Reset score
+      gameState.score = 0;
+      updateScoreDisplay();
+    }
+
+    function setDifficulty(difficulty) {
+      // Update difficulty buttons
+      document.querySelectorAll(".difficulty-btn").forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.difficulty === difficulty) {
+          btn.classList.add('active');
+        }
+      });
+      
+      // Set new difficulty
+      gameState.difficulty = difficulty;
+      
+      // Clear any existing game interval (for timed mode)
+      if (gameState.gameInterval) {
+        clearInterval(gameState.gameInterval);
+        gameState.gameInterval = null;
+      }
+      
+      // Reset game state
+      gameState.score = 0;
+      gameState.timeLeft = 60;
+      updateScoreDisplay();
+      elements.timer.style.display = 'none';
+      
+      // Set up new targets
+      setupTargets();
+    }
+
+    function updateWind() {
+      // Random wind speed and direction
+      gameState.windSpeed = (Math.random() * 10).toFixed(1);
+      gameState.windDirection = Math.random() > 0.5 ? 1 : -1;
+      
+      // Update display
+      elements.windValue.textContent = gameState.windSpeed;
+      elements.windArrow.textContent = gameState.windDirection > 0 ? '→' : '←';
+      elements.windArrow.style.transform = `scaleX(${gameState.windDirection})`;
+      
+      // Change wind periodically
+      setTimeout(updateWind, 5000 + Math.random() * 5000);
+    }
+
+    function togglePause() {
+      gameState.isPaused = !gameState.isPaused;
+      elements.pauseBtn.textContent = gameState.isPaused ? 'Resume' : 'Pause';
+      
+      if (gameState.isPaused) {
+        cancelAnimationFrame(animationFrameId);
+      } else {
+        gameLoop();
+      }
+    }
+
+    function restartGame() {
+      // Clear any existing game interval
+      if (gameState.gameInterval) {
+        clearInterval(gameState.gameInterval);
+        gameState.gameInterval = null;
+      }
+      
+      // Reset game state
+      gameState.score = 0;
+      gameState.timeLeft = 60;
+      updateScoreDisplay();
+      
+      // Clear arrows
+      document.querySelectorAll('.arrows use').forEach(arrow => {
+        arrow.parentNode.removeChild(arrow);
+      });
+      
+      // Reset targets
+      setupTargets();
+      
+      // Resume game if paused
+      if (gameState.isPaused) {
+        togglePause();
+      }
+    }
+
+    function toggleDayNight() {
+      gameState.isNightMode = !gameState.isNightMode;
+      elements.daynightBtn.textContent = gameState.isNightMode ? 'Day Mode' : 'Night Mode';
+      elements.body.classList.toggle('night-mode');
+    }
+
+    function updateScoreDisplay() {
+      elements.score.textContent = gameState.score;
+    }
+
+    function gameLoop() {
+      if (gameState.isPaused) return;
+      
+      // Update moving targets
+      if (gameState.difficulty === 'hard') {
+        activeTargets.forEach(target => {
+          if (target.speed) {
+            // Move target horizontally
+            target.x += target.speed * target.direction;
+            
+            // Update line segment
+            target.lineSegment.x1 += target.speed * target.direction;
+            target.lineSegment.x2 += target.speed * target.direction;
+            
+            // Bounce at edges
+            if (target.x > 950 || target.x < 450) {
+              target.direction *= -1;
+            }
+            
+            // Update position
+            target.element.setAttribute('transform', `translate(${target.x - 900}, ${target.y - 249.5})`);
+          }
+        });
+      }
+      
+      // Update particles
+    //   updateParticles();
+      
+      // Continue loop
+      animationFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    // function updateParticles() {
+    //   // Update and remove old particles
+    //   particles = particles.filter(particle => {
+    //     particle.lifetime--;
+        
+    //     if (particle.lifetime <= 0) {
+    //       document.body.removeChild(particle.element);
+    //       return false;
+    //     }
+        
+    //     particle.x += particle.vx;
+    //     particle.y += particle.vy;
+    //     particle.vy += 0.1; // gravity
+        
+    //     particle.element.style.transform = `translate(${particle.x}px, ${particle.y}px) scale(${particle.lifetime / 20})`;
+    //     particle.element.style.opacity = particle.lifetime / 20;
+        
+    //     return true;
+    //   });
+    // }
+
+    function createParticles(x, y, color, count) {
+      for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.width = `${5 + Math.random() * 10}px`;
+        particle.style.height = particle.style.width;
+        particle.style.backgroundColor = color;
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        document.body.appendChild(particle);
+        
+        particles.push({
+          element: particle,
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 10,
+          vy: (Math.random() - 0.5) * 10,
+          lifetime: 20
+        });
+      }
+    }
+
+    function handleTouchStart(e) {
+      e.preventDefault();
+      draw(e.touches[0]);
+    }
+
+    function handleTouchMove(e) {
+      e.preventDefault();
+      aim(e.touches[0]);
+    }
+
+    function draw(e) {
+      if (gameState.isPaused) return;
+      
+      // pull back arrow
+      randomAngle = (Math.random() * Math.PI * 0.03) - 0.015;
+      TweenMax.to(".arrow-angle use", 0.3, {
+        opacity: 1
+      });
+      
+      window.addEventListener("mousemove", aim);
+      window.addEventListener("mouseup", loose);
+      window.addEventListener("touchmove", handleTouchMove);
+      window.addEventListener("touchend", loose);
+      
+      aim(e);
+    }
+
+    function aim(e) {
+      if (gameState.isPaused) return;
+      
+      // get mouse position in relation to svg position and scale
+      var point = getMouseSVG(e);
+      point.x = Math.min(point.x, 100 - 7);
+      point.y = Math.max(point.y, 250 + 7);
+      
+      var dx = point.x - 100;
+      var dy = point.y - 250;
+      
+      // Make it more difficult by adding random angle each time
+      var angle = Math.atan2(dy, dx) + randomAngle;
+      var bowAngle = angle - Math.PI;
+      currentDistance = Math.min(Math.sqrt((dx * dx) + (dy * dy)), 50);
+      var scale = Math.min(Math.max(currentDistance / 30, 1), 2);
+      
+      // Update power meter
+      elements.powerLevel.style.width = `${(currentDistance / 50) * 100}%`;
+      
+      TweenMax.to("#bow", 0.3, {
+        scaleX: scale,
+        rotation: bowAngle + "rad",
+        transformOrigin: "right center"
+      });
+      
+      var arrowX = Math.min(100 - ((1 / scale) * currentDistance), 88);
+      
+      TweenMax.to(".arrow-angle", 0.3, {
+        rotation: bowAngle + "rad",
+        svgOrigin: "100 250"
+      });
+      
+      TweenMax.to(".arrow-angle use", 0.3, {
+        x: -currentDistance
+      });
+      
+      TweenMax.to("#bow polyline", 0.3, {
+        attr: {
+          points: "88,200 " + Math.min(100 - ((1 / scale) * currentDistance), 88) + ",250 88,300"
+        }
+      });
+      
+      var radius = currentDistance * 9;
+      var offset = {
+        x: (Math.cos(bowAngle) * radius),
+        y: (Math.sin(bowAngle) * radius)
+      };
+      var arcWidth = offset.x * 3;
+      
+      TweenMax.to("#arc", 0.3, {
+        attr: {
+          d: "M100,250c" + offset.x + "," + offset.y + "," + (arcWidth - offset.x) + "," + (offset.y + 50) + "," + arcWidth + ",50"
+        },
+        autoAlpha: currentDistance/60
+      });
+    }
+
+    function loose() {
+      if (gameState.isPaused) return;
+      
+      // release arrow
+      window.removeEventListener("mousemove", aim);
+      window.removeEventListener("mouseup", loose);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", loose);
+      
+      TweenMax.to("#bow", 0.4, {
+        scaleX: 1,
+        transformOrigin: "right center",
+        ease: Elastic.easeOut
+      });
+      
+      TweenMax.to("#bow polyline", 0.4, {
+        attr: {
+          points: "88,200 88,250 88,300"
+        },
+        ease: Elastic.easeOut
+      });
+      
+      // duplicate arrow
+      var newArrow = document.createElementNS("http://www.w3.org/2000/svg", "use");
+      newArrow.setAttributeNS('http://www.w3.org/1999/xlink', 'href', "#arrow");
+      arrows.appendChild(newArrow);
+      
+      // Apply wind effect to trajectory
+      const windEffect = gameState.windSpeed * gameState.windDirection * 0.2;
+      
+      // animate arrow along path
+      var path = MorphSVGPlugin.pathDataToBezier("#arc");
+      
+      // Adjust path for wind
+      path.forEach(point => {
+        point.y += windEffect * (point.x / 100);
+      });
+      
+      TweenMax.to([newArrow], 0.5, {
+        force3D: true,
+        bezier: {
+          type: "cubic",
+          values: path,
+          autoRotate: ["x", "y", "rotation"]
+        },
+        onUpdate: hitTest,
+        onUpdateParams: ["{self}"],
+        onComplete: onMiss,
+        ease: Linear.easeNone
+      });
+      
+      // Add arrow trail particles
+      for (let i = 0; i < 10; i++) {
+        setTimeout(() => {
+          if (newArrow.parentNode) { // Check if arrow still exists
+            const transform = newArrow._gsTransform;
+            if (transform) {
+              createParticles(
+                elements.game.getBoundingClientRect().left + transform.x,
+                elements.game.getBoundingClientRect().top + transform.y,
+                '#88ce02',
+                3
+              );
+            }
+          }
+        }, i * 50);
+      }
+      
+      TweenMax.to("#arc", 0.3, {
+        opacity: 0
+      });
+      
+      //hide previous arrow
+      TweenMax.set(".arrow-angle use", {
+        opacity: 0
+      });
+      
+      // Update shot count
+      gameState.achievements.totalShots++;
+    }
+
+    function hitTest(tween) {
+      if (gameState.isPaused) return;
+      
+      // check for collisions with arrow and targets
+      var arrow = tween.target[0];
+      var transform = arrow._gsTransform;
+      if (!transform) return;
+      
+      var radians = transform.rotation * Math.PI / 180;
+      var arrowSegment = {
+        x1: transform.x,
+        y1: transform.y,
+        x2: (Math.cos(radians) * 60) + transform.x,
+        y2: (Math.sin(radians) * 60) + transform.y
+      }
+      
+      // Check against all active targets
+      for (const target of activeTargets) {
+        const intersection = getIntersection(arrowSegment, target.lineSegment);
+        if (intersection.segment1 && intersection.segment2) {
+          tween.pause();
+          var dx = intersection.x - target.x;
+          var dy = intersection.y - target.y;
+          var distance = Math.sqrt((dx * dx) + (dy * dy));
+          var selector = ".hit";
+          
+          // Determine score based on accuracy
+          let points = 1;
+          if (distance < 20) points = 5;
+          if (distance < 7) {
+            points = 10;
+            selector = ".bullseye";
+            gameState.achievements.bullseyeStreak++;
+            gameState.achievements.totalBullseyes++;
+            
+            // Achievement check
+            if (gameState.achievements.bullseyeStreak >= 3) {
+              showMessage(".bullseye");
+              setTimeout(() => {
+                alert(`Achievement Unlocked: 3 Bullseyes in a row!`);
+              }, 1000);
+            }
+            
+            animateBullseye(target);
+          } else {
+            gameState.achievements.bullseyeStreak = 0;
+          }
+          
+          // Add score
+          gameState.score += points;
+          updateScoreDisplay();
+          
+          // Update high score if needed
+          if (gameState.score > gameState.highScore) {
+            gameState.highScore = gameState.score;
+            localStorage.setItem('bullseyeHighScore', gameState.highScore);
+          }
+          
+          // Show hit effect
+          showMessage(selector);
+          
+          // Target destruction effect
+          destroyTarget(target, intersection.x, intersection.y);
+          
+          // Remove arrow
+          if (arrow.parentNode) {
+            arrow.parentNode.removeChild(arrow);
+          }
+          
+          return;
+        }
+      }
+    }
+
+    function animateBullseye(target) {
+      // Animate the hit target
+      TweenMax.to(target.element, 0.2, {
+        scale: 1.2,
+        yoyo: true,
+        repeat: 1,
+        transformOrigin: "center",
+        svgOrigin: `${target.x} ${target.y}`
+      });
+      
+      // Create celebration particles
+      const rect = elements.game.getBoundingClientRect();
+      createParticles(
+        rect.left + target.x,
+        rect.top + target.y,
+        '#F4531C',
+        20
+      );
+    }
+
+    function destroyTarget(target, hitX, hitY) {
+      // Create target fragments
+      const rect = elements.game.getBoundingClientRect();
+      const color = target.element.getAttribute('xlink:href') === '#target-easy' ? '#F4531C' : 
+                   target.element.getAttribute('xlink:href') === '#target-medium' ? '#FFC107' : '#4CAF50';
+      
+      createParticles(
+        rect.left + hitX,
+        rect.top + hitY,
+        color,
+        15
+      );
+      
+      // For timed mode, respawn the target
+      if (gameState.timedMode && target !== activeTargets[0]) {
+        setTimeout(() => {
+          target.element.setAttribute('opacity', '0');
+          TweenMax.to(target.element, 0.5, {
+            opacity: 1,
+            delay: 1
+          });
+        }, 300);
+      }
+    }
+
+    function onMiss() {
+      // Missed the target
+      showMessage(".miss");
+      gameState.achievements.bullseyeStreak = 0;
+    }
+
+    function showMessage(selector) {
+      // handle all text animations by providing selector
+      TweenMax.killTweensOf(selector);
+      TweenMax.killChildTweensOf(selector);
+      
+      TweenMax.set(selector, {
+        autoAlpha: 1
+      });
+      
+      TweenMax.staggerFromTo(selector + " path", .5, {
+        rotation: -5,
+        scale: 0,
+        transformOrigin: "center"
+      }, {
+        scale: 1,
+        ease: Back.easeOut
+      }, .05);
+      
+      TweenMax.staggerTo(selector + " path", .3, {
+        delay: 2,
+        rotation: 20,
+        scale: 0,
+        ease: Back.easeIn
+      }, .03);
+    }
+
+    function getMouseSVG(e) {
+      // normalize mouse position within svg coordinates
+      cursor.x = e.clientX;
+      cursor.y = e.clientY;
+      return cursor.matrixTransform(elements.game.getScreenCTM().inverse());
+    }
+
+    function getIntersection(segment1, segment2) {
+      // find intersection point of two line segments
+      var dx1 = segment1.x2 - segment1.x1;
+      var dy1 = segment1.y2 - segment1.y1;
+      var dx2 = segment2.x2 - segment2.x1;
+      var dy2 = segment2.y2 - segment2.y1;
+      var cx = segment1.x1 - segment2.x1;
+      var cy = segment1.y1 - segment2.y1;
+      var denominator = dy2 * dx1 - dx2 * dy1;
+      
+      if (denominator == 0) {
+        return null;
+      }
+      
+      var ua = (dx2 * cy - dy2 * cx) / denominator;
+      var ub = (dx1 * cy - dy1 * cx) / denominator;
+      
+      return {
+        x: segment1.x1 + ua * dx1,
+        y: segment1.y1 + ua * dy1,
+        segment1: ua >= 0 && ua <= 1,
+        segment2: ub >= 0 && ub <= 1
+      };
+    }
+  </script>
+</body>
+</html>

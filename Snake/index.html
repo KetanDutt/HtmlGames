@@ -16,6 +16,9 @@
             --dark-color: #212529;
             --light-color: #f8f9fa;
             --transition-speed: 0.3s;
+            --snake-head-color: #2d7dd2;
+            --snake-body-color: #4e9af1;
+            --snake-tail-color: #3a7bc8;
         }
 
         body {
@@ -27,9 +30,7 @@
         }
 
         .game-container {
-            position: relative;
             margin: 0 auto;
-            max-width: 600px;
             padding: 20px;
         }
 
@@ -51,25 +52,29 @@
         }
 
         .snake-head {
-            background-color: #2d7dd2;
-            border-radius: 4px;
+            background-color: var(--snake-head-color);
+            border-radius: 50% 50% 5px 5px;
             transform: scale(1);
             z-index: 5;
+            box-shadow: 0 0 10px rgba(45, 125, 210, 0.7);
+            position: relative;
         }
 
         .snake-body {
-            background-color: var(--primary-color);
-            border-radius: 3px;
-            box-shadow: 0 0 5px rgba(78, 154, 241, 0.7);
-            transform: scale(0.9);
+            background-color: var(--snake-body-color);
+            border-radius: 30%;
+            box-shadow: 0 0 8px rgba(78, 154, 241, 0.7);
+            transform: scale(0.95);
             transition: all 0.3s ease-out;
             z-index: 4;
         }
 
         .snake-tail {
-            opacity: 0.6;
-            transform: scale(0.8);
+            background-color: var(--snake-tail-color);
+            opacity: 0.8;
+            transform: scale(0.9);
             z-index: 3;
+            border-radius: 50%;
         }
 
         .food {
@@ -80,7 +85,7 @@
         }
 
         .food-speed {
-            background-color: #28a745 !important;
+            background-color: var(--success-color) !important;
             animation: pulse 0.5s infinite alternate, spin 2s linear infinite;
         }
 
@@ -95,7 +100,7 @@
         }
 
         .food-multiplier {
-            background-color: #ffc107 !important;
+            background-color: var(--warning-color) !important;
             animation: pulse 0.7s infinite alternate, glow 1s ease-in-out infinite;
         }
 
@@ -135,13 +140,19 @@
         }
 
         @keyframes glow {
-            0%, 100% { box-shadow: 0 0 10px #ffc107; }
-            50% { box-shadow: 0 0 20px #ffc107; }
+            0%, 100% { box-shadow: 0 0 10px var(--warning-color); }
+            50% { box-shadow: 0 0 20px var(--warning-color); }
         }
 
         @keyframes portal-pulse {
             from { transform: scale(0.9); opacity: 0.8; }
             to { transform: scale(1.1); opacity: 1; }
+        }
+
+        @keyframes snake-move {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
 
         .score-display {
@@ -165,7 +176,7 @@
             justify-content: center;
             margin: 5px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            transition: transform 0.1s;
+            transition: transform 0.1s, background-color 0.2s;
         }
 
         .control-btn:active {
@@ -178,6 +189,11 @@
             padding: 15px;
             margin-bottom: 15px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
         }
 
         .achievement-badge {
@@ -230,10 +246,18 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.8);
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 2000;
             transition: opacity 0.5s;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            animation: pulse 2s infinite;
         }
 
         .spinner {
@@ -248,6 +272,7 @@
         .modal-content {
             background-color: #343a40;
             color: var(--light-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .celebration-text {
@@ -325,8 +350,8 @@
 
         .direction-indicator {
             position: absolute;
-            width: 10px;
-            height: 10px;
+            width: 6px;
+            height: 6px;
             background-color: white;
             border-radius: 50%;
             z-index: 10;
@@ -363,11 +388,27 @@
             padding: 15px;
             font-size: 1.2rem;
             transition: transform 0.2s, background-color 0.2s;
+            position: relative;
+            overflow: hidden;
         }
 
         .menu-option:hover {
             transform: scale(1.05);
-            background-color: var(--primary-color);
+        }
+
+        .menu-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .menu-option:hover::before {
+            left: 100%;
         }
 
         .mode-indicator {
@@ -378,6 +419,7 @@
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .time-attack-timer {
@@ -401,6 +443,7 @@
             border-radius: 50%;
             display: none;
             z-index: 100;
+            backdrop-filter: blur(5px);
         }
 
         .joystick-knob {
@@ -412,6 +455,71 @@
             top: 30px;
             left: 30px;
             transition: transform 0.1s;
+            box-shadow: 0 0 10px rgba(78, 154, 241, 0.5);
+        }
+
+        .snake-eye {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: white;
+            border-radius: 50%;
+        }
+
+        .eye-left {
+            top: 4px;
+            left: 4px;
+        }
+
+        .eye-right {
+            top: 4px;
+            right: 4px;
+        }
+
+        .powerup-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .powerup-badge {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            transition: transform 0.3s;
+        }
+
+        .powerup-badge.active {
+            opacity: 1;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .combo-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--warning-color);
+            text-shadow: 0 0 5px rgba(255, 193, 7, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 50;
+        }
+
+        .combo-display.show {
+            opacity: 1;
+            transform: translate(-50%, -60%);
         }
 
         @media (max-width: 768px) {
@@ -429,6 +537,7 @@
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
+        <div class="loading-text">Loading Snake Game...</div>
     </div>
 
     <!-- Main Menu -->
@@ -453,6 +562,10 @@
         
         <button class="btn btn-secondary menu-option" id="statsBtn">
             <i class="bi bi-graph-up me-2"></i>Statistics
+        </button>
+
+        <button class="btn btn-outline-light mt-4" id="howToPlayBtn">
+            <i class="bi bi-question-circle me-2"></i>How to Play
         </button>
     </div>
 
@@ -486,6 +599,7 @@
                     </div>
 
                     <div id="game-board" class="mb-3"></div>
+                    <div class="combo-display" id="comboDisplay"></div>
 
                     <div class="controls d-flex justify-content-center d-md-none">
                         <div class="d-flex flex-column align-items-center">
@@ -549,6 +663,22 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Power-up Indicators -->
+    <div class="powerup-indicator" id="powerupIndicator">
+        <div class="powerup-badge bg-success" id="speedBoostIndicator" title="Speed Boost">
+            <i class="bi bi-lightning"></i>
+        </div>
+        <div class="powerup-badge bg-secondary" id="slowDownIndicator" title="Slow Down">
+            <i class="bi bi-hourglass"></i>
+        </div>
+        <div class="powerup-badge bg-purple" id="wallPassIndicator" title="Wall Pass">
+            <i class="bi bi-shield"></i>
+        </div>
+        <div class="powerup-badge bg-warning" id="multiplierIndicator" title="Score Multiplier">
+            <i class="bi bi-stars"></i>
         </div>
     </div>
 
@@ -810,7 +940,7 @@
             gridSizeBtns: document.querySelectorAll('.grid-size-btn'),
             speedControl: document.getElementById('speedControl'),
             speedValue: document.getElementById('speedValue'),
-            // howToPlayBtn: document.getElementById('howToPlayBtn'),
+            howToPlayBtn: document.getElementById('howToPlayBtn'),
             achievementsContainer: document.getElementById('achievementsContainer'),
             loadingOverlay: document.getElementById('loadingOverlay'),
             confettiContainer: document.getElementById('confettiContainer'),
@@ -840,7 +970,13 @@
             achievementTitle: document.getElementById('achievementTitle'),
             achievementDesc: document.getElementById('achievementDesc'),
             celebrationTitle: document.getElementById('celebrationTitle'),
-            celebrationMessage: document.getElementById('celebrationMessage')
+            celebrationMessage: document.getElementById('celebrationMessage'),
+            comboDisplay: document.getElementById('comboDisplay'),
+            powerupIndicator: document.getElementById('powerupIndicator'),
+            speedBoostIndicator: document.getElementById('speedBoostIndicator'),
+            slowDownIndicator: document.getElementById('slowDownIndicator'),
+            wallPassIndicator: document.getElementById('wallPassIndicator'),
+            multiplierIndicator: document.getElementById('multiplierIndicator')
         };
 
         // Audio elements
@@ -898,11 +1034,13 @@
             gameState.timeLeft = gameState.timeAttackDuration;
             gameState.lastTimeUpdate = Date.now();
             gameState.activePowerUps = [];
+            gameState.comboCount = 0;
             
             // Reset all power-ups
             for (const key in gameState.powerUps) {
                 gameState.powerUps[key].active = false;
             }
+            updatePowerUpIndicators();
             
             // Initialize based on game mode
             switch (mode) {
@@ -965,7 +1103,6 @@
         function createGameBoard() {
             elements.gameBoard.innerHTML = '';
             elements.gameBoard.style.width = `${gameState.gridSize * gameState.cellSize}px`;
-            elements.gameBoard.style.height = `${gameState.gridSize * gameState.cellSize}px`;
             
             // Create cells
             for (let y = 0; y < gameState.gridSize; y++) {
@@ -1132,6 +1269,7 @@
                 const now = Date.now();
                 if (now - gameState.lastFoodTime < gameState.comboTimeout) {
                     gameState.comboCount++;
+                    showCombo(gameState.comboCount);
                 } else {
                     gameState.comboCount = 1;
                 }
@@ -1197,13 +1335,25 @@
             checkMilestones();
         }
 
+        // Show combo animation
+        function showCombo(count) {
+            if (count < 2) return;
+            
+            elements.comboDisplay.textContent = `${count}x Combo!`;
+            elements.comboDisplay.classList.add('show');
+            
+            setTimeout(() => {
+                elements.comboDisplay.classList.remove('show');
+            }, 1000);
+        }
+
         // Render snake on the board
         function renderSnake() {
             // Clear all snake classes
-            document.querySelectorAll('.snake-head, .snake-body, .snake-tail, .direction-indicator').forEach(cell => {
+            document.querySelectorAll('.snake-head, .snake-body, .snake-tail, .direction-indicator, .snake-eye').forEach(cell => {
                 cell.classList.remove('snake-head', 'snake-body', 'snake-tail');
-                const indicator = cell.querySelector('.direction-indicator');
-                if (indicator) indicator.remove();
+                const indicators = cell.querySelectorAll('.direction-indicator, .snake-eye');
+                indicators.forEach(ind => ind.remove());
             });
             
             // Add snake classes with different effects
@@ -1236,6 +1386,21 @@
                                 indicator.style.left = '8px';
                                 break;
                         }
+                        
+                        // Add eyes to snake head
+                        const leftEye = document.createElement('div');
+                        leftEye.className = 'snake-eye eye-left';
+                        cell.appendChild(leftEye);
+                        
+                        const rightEye = document.createElement('div');
+                        rightEye.className = 'snake-eye eye-right';
+                        cell.appendChild(rightEye);
+                        
+                        // Add animation to head
+                        cell.style.animation = 'snake-move 0.3s ease-in-out';
+                        setTimeout(() => {
+                            cell.style.animation = '';
+                        }, 300);
                     } else if (index === gameState.snake.length - 1) {
                         cell.classList.add('snake-tail');
                     } else {
@@ -1389,8 +1554,19 @@
                 gameState.activePowerUps.push(type);
             }
             
+            // Update power-up indicators
+            updatePowerUpIndicators();
+            
             // Start power-up timer
             updatePowerUps();
+        }
+
+        // Update power-up indicators
+        function updatePowerUpIndicators() {
+            elements.speedBoostIndicator.classList.toggle('active', gameState.powerUps.speedBoost.active);
+            elements.slowDownIndicator.classList.toggle('active', gameState.powerUps.slowDown.active);
+            elements.wallPassIndicator.classList.toggle('active', gameState.powerUps.wallPass.active);
+            elements.multiplierIndicator.classList.toggle('active', gameState.powerUps.scoreMultiplier.active);
         }
 
         // Update power-up timers
@@ -1410,6 +1586,9 @@
                     }
                 }
             });
+            
+            // Update indicators
+            updatePowerUpIndicators();
             
             // Continue updating if there are active power-ups
             if (gameState.activePowerUps.length > 0) {
@@ -1896,9 +2075,9 @@
             });
             
             // How to play button
-            // elements.howToPlayBtn.addEventListener('click', () => {
-            //     elements.howToPlayModal.show();
-            // });
+            elements.howToPlayBtn.addEventListener('click', () => {
+                elements.howToPlayModal.show();
+            });
             
             // Menu buttons
             elements.playClassicBtn.addEventListener('click', () => {
@@ -1960,7 +2139,7 @@
                 // Only register if swipe was significant enough
                 if (Math.abs(dx) > 30 || Math.abs(dy) > 30) {
                     if (Math.abs(dx) > Math.abs(dy)) {
-                        // Horizontal swipe
+                        // Horizontal swipez
                         if (dx > 0 && gameState.direction !== 'left') {
                             gameState.nextDirection = 'right';
                         } else if (dx < 0 && gameState.direction !== 'right') {
