@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Model Viewer with OBJ Support</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            margin-bottom: 15px;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+        }
+        
+        .canvas-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            flex-grow: 1;
+            min-width: 600px;
+            max-width: 800px;
+        }
+        
+        .canvas-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff8a00, #e52e71, #22c1c3, #ff8a00);
+            z-index: -1;
+            border-radius: 17px;
+        }
+        
+        canvas {
+            background: rgba(0, 0, 30, 0.7);
+            border-radius: 10px;
+            display: block;
+            width: 100%;
+            height: 500px;
+        }
+        
+        .controls {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            width: 300px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .controls::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #22c1c3, #fdbb2d, #22c1c3);
+            z-index: -1;
+            border-radius: 17px;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group h3 {
+            margin-bottom: 15px;
+            color: #22c1c3;
+            font-size: 1.3rem;
+        }
+        
+        .slider-container {
+            margin: 12px 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #ff7e5f;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 126, 95, 0.7);
+        }
+        
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .file-upload-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .file-upload-btn:hover {
+            background: linear-gradient(to right, #feb47b, #ff7e5f);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .file-upload input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .model-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .model-info p {
+            margin: 5px 0;
+        }
+        
+        .info-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .info-panel::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #8e2de2, #4a00e0, #8e2de2);
+            z-index: -1;
+            border-radius: 17px;
+        }
+        
+        .info-panel h2 {
+            color: #8e2de2;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+        
+        .info-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .info-card h3 {
+            color: #feb47b;
+            margin-bottom: 10px;
+        }
+        
+        .info-card ul {
+            padding-left: 20px;
+        }
+        
+        .info-card li {
+            margin: 8px 0;
+        }
+        
+        .status {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #feb47b;
+        }
+        
+        .sample-models {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .model-btn {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .model-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .canvas-container {
+                min-width: unset;
+                width: 100%;
+            }
+            
+            .controls {
+                width: 100%;
+                max-width: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>3D Model Viewer</h1>
+            <p class="subtitle">Upload and view 3D models in OBJ format with this software-based renderer</p>
+            <p>Try sample models or upload your own OBJ file</p>
+        </header>
+        
+        <div class="content">
+            <div class="canvas-container">
+                <canvas id="modelCanvas" width="800" height="500"></canvas>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <h3>Model Controls</h3>
+                    
+                    <div class="file-upload">
+                        <button class="file-upload-btn">Upload OBJ File</button>
+                        <input type="file" id="modelUpload" accept=".obj">
+                    </div>
+                    
+                    <div class="model-info">
+                        <p id="modelName">Current: Cube (default)</p>
+                        <p id="modelStats">Vertices: 8, Faces: 12</p>
+                    </div>
+                    
+                    <div class="sample-models">
+                        <button class="model-btn" data-model="cube">Cube</button>
+                        <button class="model-btn" data-model="pyramid">Pyramid</button>
+                        <button class="model-btn" data-model="sphere">Sphere</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>Rotation Controls</h3>
+                    
+                    <div class="slider-container">
+                        <label for="rotationX">X-Axis Rotation</label>
+                        <input type="range" id="rotationX" min="0" max="360" value="30">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="rotationY">Y-Axis Rotation</label>
+                        <input type="range" id="rotationY" min="0" max="360" value="45">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="rotationZ">Z-Axis Rotation</label>
+                        <input type="range" id="rotationZ" min="0" max="360" value="0">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>Camera Settings</h3>
+                    
+                    <div class="slider-container">
+                        <label for="cameraZ">Camera Distance</label>
+                        <input type="range" id="cameraZ" min="5" max="20" value="10">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="fov">Field of View</label>
+                        <input type="range" id="fov" min="500" max="1500" value="800">
+                    </div>
+                </div>
+                
+                <div class="status" id="status">Rendering at 60 FPS</div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h2>How This 3D Renderer Works</h2>
+            <div class="info-content">
+                <div class="info-card">
+                    <h3>OBJ File Support</h3>
+                    <ul>
+                        <li>Upload any OBJ model file for rendering</li>
+                        <li>Models are parsed and rendered in real-time</li>
+                        <li>Automatic normalization and centering</li>
+                        <li>Supports vertices, faces, and simple meshes</li>
+                    </ul>
+                </div>
+                
+                <div class="info-card">
+                    <h3>3D Transformation Pipeline</h3>
+                    <ul>
+                        <li>Vertex parsing from OBJ file</li>
+                        <li>Rotation using matrix transformations</li>
+                        <li>Perspective projection to 2D canvas</li>
+                        <li>Depth sorting for correct rendering</li>
+                    </ul>
+                </div>
+                
+                <div class="info-card">
+                    <h3>Technical Details</h3>
+                    <ul>
+                        <li>Pure JavaScript implementation</li>
+                        <li>No WebGL or external libraries</li>
+                        <li>Real-time OBJ file parsing</li>
+                        <li>Wireframe rendering with face coloring</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('modelCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusEl = document.getElementById('status');
+        const modelNameEl = document.getElementById('modelName');
+        const modelStatsEl = document.getElementById('modelStats');
+        
+        // Control elements
+        const rotationX = document.getElementById('rotationX');
+        const rotationY = document.getElementById('rotationY');
+        const rotationZ = document.getElementById('rotationZ');
+        const cameraZ = document.getElementById('cameraZ');
+        const fov = document.getElementById('fov');
+        const modelUpload = document.getElementById('modelUpload');
+        const modelBtns = document.querySelectorAll('.model-btn');
+        
+        // Current model data
+        let model = {
+            name: "Cube",
+            vertices: [],
+            faces: [],
+            edges: []
+        };
+        
+        // Default cube model
+        function createCube() {
+            // Cube vertices (x, y, z)
+            const vertices = [
+                [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
+                [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]
+            ];
+            
+            // Cube edges (vertex indices)
+            const edges = [
+                [0, 1], [1, 2], [2, 3], [3, 0], // back face
+                [4, 5], [5, 6], [6, 7], [7, 4], // front face
+                [0, 4], [1, 5], [2, 6], [3, 7]  // connecting edges
+            ];
+            
+            // Cube faces (vertex indices, color)
+            const faces = [
+                { vertices: [0, 1, 2, 3], color: 'rgba(255, 0, 0, 0.6)' },   // back - red
+                { vertices: [4, 5, 6, 7], color: 'rgba(0, 255, 0, 0.6)' },   // front - green
+                { vertices: [0, 4, 7, 3], color: 'rgba(0, 0, 255, 0.6)' },   // left - blue
+                { vertices: [1, 5, 6, 2], color: 'rgba(255, 255, 0, 0.6)' }, // right - yellow
+                { vertices: [0, 1, 5, 4], color: 'rgba(255, 0, 255, 0.6)' }, // bottom - magenta
+                { vertices: [3, 2, 6, 7], color: 'rgba(0, 255, 255, 0.6)' }  // top - cyan
+            ];
+            
+            return {
+                name: "Cube",
+                vertices: vertices,
+                edges: edges,
+                faces: faces
+            };
+        }
+        
+        // Create a pyramid model
+        function createPyramid() {
+            const vertices = [
+                [0, 1, 0],    // Top
+                [-1, -1, -1],  // Base front left
+                [1, -1, -1],   // Base front right
+                [1, -1, 1],    // Base back right
+                [-1, -1, 1]    // Base back left
+            ];
+            
+            const edges = [
+                [0, 1], [0, 2], [0, 3], [0, 4], // Top to base
+                [1, 2], [2, 3], [3, 4], [4, 1]  // Base edges
+            ];
+            
+            const faces = [
+                { vertices: [0, 1, 2], color: 'rgba(255, 100, 100, 0.7)' },   // Front
+                { vertices: [0, 2, 3], color: 'rgba(100, 255, 100, 0.7)' },   // Right
+                { vertices: [0, 3, 4], color: 'rgba(100, 100, 255, 0.7)' },   // Back
+                { vertices: [0, 4, 1], color: 'rgba(255, 255, 100, 0.7)' },   // Left
+                { vertices: [1, 2, 3, 4], color: 'rgba(255, 100, 255, 0.7)' } // Base
+            ];
+            
+            return {
+                name: "Pyramid",
+                vertices: vertices,
+                edges: edges,
+                faces: faces
+            };
+        }
+        
+        // Create a sphere model (approximation)
+        function createSphere() {
+            const segments = 8;
+            const rings = 6;
+            const vertices = [];
+            const edges = [];
+            const faces = [];
+            
+            // Create vertices
+            for (let i = 0; i <= rings; i++) {
+                const phi = Math.PI * i / rings;
+                for (let j = 0; j <= segments; j++) {
+                    const theta = 2 * Math.PI * j / segments;
+                    const x = Math.sin(phi) * Math.cos(theta);
+                    const y = Math.cos(phi);
+                    const z = Math.sin(phi) * Math.sin(theta);
+                    vertices.push([x, y, z]);
+                }
+            }
+            
+            // Create edges and faces
+            for (let i = 0; i < rings; i++) {
+                for (let j = 0; j < segments; j++) {
+                    const a = i * (segments + 1) + j;
+                    const b = a + 1;
+                    const c = (i + 1) * (segments + 1) + j;
+                    const d = c + 1;
+                    
+                    edges.push([a, b], [a, c]);
+                    
+                    faces.push({
+                        vertices: [a, b, d, c],
+                        color: `rgba(${Math.floor(150 + 100 * Math.random())}, 
+                                    ${Math.floor(150 + 100 * Math.random())}, 
+                                    ${Math.floor(150 + 100 * Math.random())}, 0.6)`
+                    });
+                }
+            }
+            
+            return {
+                name: "Sphere",
+                vertices: vertices,
+                edges: edges,
+                faces: faces
+            };
+        }
+        
+        // Animation state
+        let rotation = {
+            x: 30,
+            y: 45,
+            z: 0
+        };
+        
+        let camera = {
+            z: 10
+        };
+        
+        let projection = {
+            fov: 800
+        };
+        
+        // Rotation matrices
+        function getRotationMatrix(x, y, z) {
+            const degToRad = Math.PI / 180;
+            x = x * degToRad;
+            y = y * degToRad;
+            z = z * degToRad;
+            
+            // X-axis rotation
+            const rx = [
+                [1, 0, 0],
+                [0, Math.cos(x), -Math.sin(x)],
+                [0, Math.sin(x), Math.cos(x)]
+            ];
+            
+            // Y-axis rotation
+            const ry = [
+                [Math.cos(y), 0, Math.sin(y)],
+                [0, 1, 0],
+                [-Math.sin(y), 0, Math.cos(y)]
+            ];
+            
+            // Z-axis rotation
+            const rz = [
+                [Math.cos(z), -Math.sin(z), 0],
+                [Math.sin(z), Math.cos(z), 0],
+                [0, 0, 1]
+            ];
+            
+            // Combine matrices: rz * ry * rx
+            return multiplyMatrices(multiplyMatrices(rz, ry), rx);
+        }
+        
+        // Multiply two matrices
+        function multiplyMatrices(a, b) {
+            const result = [];
+            for (let i = 0; i < a.length; i++) {
+                result[i] = [];
+                for (let j = 0; j < b[0].length; j++) {
+                    let sum = 0;
+                    for (let k = 0; k < a[0].length; k++) {
+                        sum += a[i][k] * b[k][j];
+                    }
+                    result[i][j] = sum;
+                }
+            }
+            return result;
+        }
+        
+        // Multiply matrix and vector
+        function multiplyMatrixVector(matrix, vector) {
+            const result = [];
+            for (let i = 0; i < matrix.length; i++) {
+                let sum = 0;
+                for (let j = 0; j < vector.length; j++) {
+                    sum += matrix[i][j] * vector[j];
+                }
+                result.push(sum);
+            }
+            return result;
+        }
+        
+        // Project 3D point to 2D canvas
+        function projectPoint(point) {
+            const [x, y, z] = point;
+            
+            // Perspective projection
+            const scale = projection.fov / (camera.z + z);
+            const x2d = x * scale + canvas.width / 2;
+            const y2d = y * scale + canvas.height / 2;
+            
+            return [x2d, y2d, z];
+        }
+        
+        // Draw the current model
+        function drawModel() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Get rotation matrix
+            const rotationMatrix = getRotationMatrix(rotation.x, rotation.y, rotation.z);
+            
+            // Transform and project vertices
+            const projectedVertices = [];
+            for (let i = 0; i < model.vertices.length; i++) {
+                const rotated = multiplyMatrixVector(rotationMatrix, model.vertices[i]);
+                projectedVertices.push(projectPoint(rotated));
+            }
+            
+            // Draw faces with depth sorting
+            if (model.faces && model.faces.length > 0) {
+                const sortedFaces = model.faces.map(face => {
+                    // Calculate average Z for depth sorting
+                    const avgZ = face.vertices.reduce((sum, vertexIndex) => 
+                        sum + projectedVertices[vertexIndex][2], 0) / face.vertices.length;
+                    
+                    return { ...face, avgZ };
+                }).sort((a, b) => b.avgZ - a.avgZ); // Sort from back to front
+                
+                // Draw each face
+                for (const face of sortedFaces) {
+                    ctx.beginPath();
+                    const firstVertex = projectedVertices[face.vertices[0]];
+                    ctx.moveTo(firstVertex[0], firstVertex[1]);
+                    
+                    for (let i = 1; i < face.vertices.length; i++) {
+                        const vertex = projectedVertices[face.vertices[i]];
+                        ctx.lineTo(vertex[0], vertex[1]);
+                    }
+                    
+                    ctx.closePath();
+                    ctx.fillStyle = face.color || 'rgba(100, 180, 255, 0.5)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+            
+            // Draw edges
+            if (model.edges && model.edges.length > 0) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.lineWidth = 2;
+                
+                for (const edge of model.edges) {
+                    const [start, end] = edge;
+                    const [x1, y1] = projectedVertices[start];
+                    const [x2, y2] = projectedVertices[end];
+                    
+                    // Skip lines that are behind the camera
+                    if (projectedVertices[start][2] < -camera.z + 0.5 || projectedVertices[end][2] < -camera.z + 0.5) {
+                        continue;
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+                }
+            }
+            
+            // Draw vertices
+            for (const vertex of projectedVertices) {
+                const [x, y, z] = vertex;
+                
+                // Skip vertices behind the camera
+                if (z < -camera.z + 0.5) continue;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + (z + camera.z) / (2 * camera.z)})`;
+                ctx.fill();
+            }
+        }
+        
+        // Parse OBJ file content
+        function parseOBJ(content) {
+            const vertices = [];
+            const faces = [];
+            
+            const lines = content.split('\n');
+            
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed.length === 0 || trimmed.startsWith('#')) continue;
+                
+                const parts = trimmed.split(/\s+/);
+                const type = parts[0];
+                
+                if (type === 'v') {
+                    // Vertex definition: v x y z
+                    const x = parseFloat(parts[1]);
+                    const y = parseFloat(parts[2]);
+                    const z = parseFloat(parts[3]);
+                    vertices.push([x, y, z]);
+                } else if (type === 'f') {
+                    // Face definition: f v1 v2 v3 ...
+                    const faceVertices = [];
+                    for (let i = 1; i < parts.length; i++) {
+                        // Handle vertex/texture/normal indices (we only care about vertex)
+                        const vertexIndex = parts[i].split('/')[0];
+                        // OBJ indices are 1-based, convert to 0-based
+                        faceVertices.push(parseInt(vertexIndex) - 1);
+                    }
+                    faces.push({
+                        vertices: faceVertices,
+                        color: `rgba(${Math.floor(100 + 155 * Math.random())}, 
+                                    ${Math.floor(100 + 155 * Math.random())}, 
+                                    ${Math.floor(100 + 155 * Math.random())}, 0.6)`
+                    });
+                }
+            }
+            
+            // Create edges from faces (for wireframe)
+            const edgeSet = new Set();
+            for (const face of faces) {
+                const verts = face.vertices;
+                for (let i = 0; i < verts.length; i++) {
+                    const next = (i + 1) % verts.length;
+                    // Create sorted edge to avoid duplicates
+                    const edge = [Math.min(verts[i], verts[next]), Math.max(verts[i], verts[next])];
+                    edgeSet.add(edge.join(','));
+                }
+            }
+            
+            const edges = Array.from(edgeSet).map(edge => edge.split(',').map(Number));
+            
+            return {
+                name: "Uploaded Model",
+                vertices: vertices,
+                faces: faces,
+                edges: edges
+            };
+        }
+        
+        // Normalize and center model vertices
+        function normalizeModel(model) {
+            if (model.vertices.length === 0) return model;
+            
+            // Find min and max coordinates
+            let minX = Infinity, minY = Infinity, minZ = Infinity;
+            let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+            
+            for (const vertex of model.vertices) {
+                minX = Math.min(minX, vertex[0]);
+                minY = Math.min(minY, vertex[1]);
+                minZ = Math.min(minZ, vertex[2]);
+                maxX = Math.max(maxX, vertex[0]);
+                maxY = Math.max(maxY, vertex[1]);
+                maxZ = Math.max(maxZ, vertex[2]);
+            }
+            
+            // Calculate center and scale
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+            const centerZ = (minZ + maxZ) / 2;
+            const size = Math.max(maxX - minX, maxY - minY, maxZ - minZ);
+            const scale = size > 0 ? 2 / size : 1;
+            
+            // Normalize and center vertices
+            const normalizedVertices = model.vertices.map(vertex => {
+                return [
+                    (vertex[0] - centerX) * scale,
+                    (vertex[1] - centerY) * scale,
+                    (vertex[2] - centerZ) * scale
+                ];
+            });
+            
+            return {
+                ...model,
+                vertices: normalizedVertices
+            };
+        }
+        
+        // Load a model
+        function loadModel(newModel) {
+            model = normalizeModel(newModel);
+            modelNameEl.textContent = `Current: ${model.name}`;
+            modelStatsEl.textContent = `Vertices: ${model.vertices.length}, Faces: ${model.faces ? model.faces.length : 0}`;
+        }
+        
+        // Frame counter for FPS
+        let frameCount = 0;
+        let lastFpsUpdate = Date.now();
+        
+        // Animation loop
+        function animate() {
+            drawModel();
+            
+            // Update FPS counter every second
+            frameCount++;
+            const now = Date.now();
+            if (now - lastFpsUpdate >= 1000) {
+                const fps = Math.round(frameCount * 1000 / (now - lastFpsUpdate));
+                statusEl.textContent = `Rendering at ${fps} FPS`;
+                frameCount = 0;
+                lastFpsUpdate = now;
+            }
+            
+            // Auto-rotate the model
+            rotation.y += 0.3;
+            if (rotation.y >= 360) rotation.y -= 360;
+            rotationY.value = rotation.y;
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Event listeners for controls
+        rotationX.addEventListener('input', () => {
+            rotation.x = parseFloat(rotationX.value);
+        });
+        
+        rotationY.addEventListener('input', () => {
+            rotation.y = parseFloat(rotationY.value);
+        });
+        
+        rotationZ.addEventListener('input', () => {
+            rotation.z = parseFloat(rotationZ.value);
+        });
+        
+        cameraZ.addEventListener('input', () => {
+            camera.z = parseFloat(cameraZ.value);
+        });
+        
+        fov.addEventListener('input', () => {
+            projection.fov = parseFloat(fov.value);
+        });
+        
+        // File upload handler
+        modelUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file || !file.name.endsWith('.obj')) {
+                alert('Please select a valid OBJ file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const modelData = parseOBJ(event.target.result);
+                    loadModel(modelData);
+                } catch (error) {
+                    console.error('Error parsing OBJ file:', error);
+                    alert('Error parsing OBJ file. Please check the file format.');
+                }
+            };
+            reader.readAsText(file);
+        });
+        
+        // Sample model buttons
+        modelBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const modelType = btn.dataset.model;
+                switch(modelType) {
+                    case 'cube':
+                        loadModel(createCube());
+                        break;
+                    case 'pyramid':
+                        loadModel(createPyramid());
+                        break;
+                    case 'sphere':
+                        loadModel(createSphere());
+                        break;
+                }
+            });
+        });
+        
+        // Initialize with the cube model
+        loadModel(createCube());
+        
+        // Set initial control values
+        rotationX.value = rotation.x;
+        rotationY.value = rotation.y;
+        rotationZ.value = rotation.z;
+        cameraZ.value = camera.z;
+        fov.value = projection.fov;
+        
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
